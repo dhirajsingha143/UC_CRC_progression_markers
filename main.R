@@ -28,7 +28,6 @@ library(ggrepel)
 library(clusterProfiler)
 library(org.Hs.eg.db)
 
-#Github token: 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
 
 # GEO data set load local downloaded files
 
