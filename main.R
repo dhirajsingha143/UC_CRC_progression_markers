@@ -11,6 +11,9 @@ BiocManager::install("reshape2")
 BiocManager::install("ggplot2")
 BiocManager::install("limma")
 BiocManager::install("ggforce")
+BiocManager::install("ggrepel")
+BiocManager::install("clusterProfiler")
+BiocManager::install("org.Hs.eg.db")
 
 # load packages
 library(GEOquery)
@@ -21,6 +24,9 @@ library(reshape2)
 library(ggplot2)
 library(limma)
 library(ggforce)
+library(ggrepel)
+library(clusterProfiler)
+library(org.Hs.eg.db)
 
 #Github token: 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
 
@@ -307,6 +313,7 @@ pca_df$batch <- integrated_meta_data$batch
 
 raw_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
   geom_point(size = 3) +
+  stat_ellipse(aes(group = Group, color = Group), type = "norm", linetype = 2) +
   theme_minimal() +
   ggtitle("PCA of Raw Expression Data") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -392,6 +399,7 @@ pca_df$batch <- integrated_meta_data$batch
 
 normalized_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
   geom_point(size = 3) +
+  stat_ellipse(aes(group = Group, color = Group), type = "norm", linetype = 2) +
   theme_minimal() +
   ggtitle("PCA of Normalized Expression Data") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -474,16 +482,11 @@ pca_df <- as.data.frame(pca$x)
 pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC", "PC", "qUC", "UCD", "AD", "CRC"))
 pca_df$batch <- integrated_meta_data$batch
 
-hull_data <- pca_df %>%
-  group_by(Group) %>%
-  slice(chull(PC1, PC2))
 
 batch_corrected_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
   geom_point(size = 3) +
   stat_ellipse(aes(group = Group, color = Group), type = "norm", linetype = 2) +
   theme_minimal() +
-  #geom_text(data = centroids, aes(x = PC1, y = PC2, label = Group, color = Group),
-            #fontface = "bold", size = 5, show.legend = FALSE) +
   ggtitle("PCA of Batch Corrected Expression Data") +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -491,3 +494,124 @@ batch_corrected_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Gro
 #---Differential expression identification----
 # Load the DEG functions
 source("scripts/deg_functions.R")
+
+# Contrast selection for differential expression analysis
+custom_contrasts <- c(
+  "LSC_vs_HC = LSC - HC", # inflammatory signatures
+  "PC_vs_LSC = PC - LSC",
+  "qUC_vs_PC = qUC - PC",
+  "UCD_vs_qUC = UCD - qUC",
+  "AD_vs_UCD = AD - UCD",
+  "CRC_vs_AD = CRC - AD",
+  "CRC_vs_HC = CRC - HC"
+)
+
+# Run DEG analysis with custom contrasts
+deg_out <- run_deg_analysis(
+  expr_data = batch_corrected_expr,
+  meta_data = integrated_meta_data,
+  condition_col = "condition",
+  logfc_threshold = 1.5,
+  pval_threshold = 0.05,
+  contrasts_list = custom_contrasts
+)
+
+#---Retrieve full DEG tables into vectors----
+
+# for full results
+deg_LSC <- deg_out$`LSC_vs_HC = LSC - HC`$full_result
+deg_PC <- deg_out$`PC_vs_LSC = PC - LSC`$full_result
+deg_qUC <- deg_out$`qUC_vs_PC = qUC - PC`$full_result
+deg_UCD <- deg_out$`UCD_vs_qUC = UCD - qUC`$full_result
+deg_AD <- deg_out$`AD_vs_UCD = AD - UCD`$full_result
+deg_CRC <- deg_out$`CRC_vs_AD = CRC - AD`$full_result
+deg_CRC_HC <- deg_out$`CRC_vs_HC = CRC - HC`$full_result
+
+# for Up-reg
+
+up_LSC <- deg_out$`LSC_vs_HC = LSC - HC`$up
+up_PC <- 
+  
+  
+# for Down-reg
+  
+down_LSC <- deg_out$`LSC_vs_HC = LSC - HC`$down
+
+
+# Get Gene Symbols
+
+# for full results
+genes_deg_LSC <- deg_LSC$Gene
+
+# for up reg
+genes_up_LSC <- up_LSC$Gene
+
+# for down reg
+genes_down_LSC <- down_LSC$Gene
+
+# Fetch annotations via BioMart Function ---
+
+# Connect to Ensembl
+ensembl <- useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+
+
+get_entrez <- function(gene_list) {
+  getBM(
+    attributes = c("external_gene_name", "entrezgene_id"),
+    filters = "external_gene_name",
+    values = gene_list,
+    mart = ensembl
+  ) %>% distinct()
+}
+
+
+#---Fetch Entrez IDs for each disease----
+
+# for full results
+annot_LSC <- get_entrez(genes_deg_LSC)
+
+# for up-reg
+annot_up_LSC <- get_entrez(genes_up_LSC)
+
+#for down-reg
+annot_down_LSC <- get_entrez(genes_down_LSC)
+
+
+#---Merge annotations with DEG results----
+# for full results
+deg_out$`LSC_vs_HC = LSC - HC`$full_result <- left_join(deg_LSC,annot_LSC,by = c("Gene" = "external_gene_name"))
+
+# for up-reg
+deg_out$`LSC_vs_HC = LSC - HC`$up <- left_join(up_LSC,annot_up_LSC,by = c("Gene" = "external_gene_name"))
+
+# for down-reg
+
+
+#---Enrichment Analysis (Gene Ontology)----
+# Perform GO enrichment analysis
+
+# Prepare your named gene list (Entrez IDs per contrast)
+
+gene_list_Up <- list(
+  LSC_vs_HC <- deg_out$`LSC_vs_HC = LSC - HC`$up
+)
+
+##---Ontology enrichment results for all diseases----
+gene_list_Up_entrez <- lapply(gene_list_Up, function(x) {
+  mapped <- bitr(x, fromType = "Gene", toType = "entrezgene_id", OrgDb = org.Hs.eg.db)
+  unique(mapped$ENTREZID)
+})
+
+#---GO > BP > UP----
+go_compare_BP_up <- compareCluster(
+  geneCluster = gene_list_Up,
+  fun = "enrichGO",
+  OrgDb = org.Hs.eg.db,
+  ont = "BP", # or "MF", "CC", or "ALL"
+  pvalueCutoff = 0.05,
+  readable = TRUE
+)
+
+
+
+
