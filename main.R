@@ -27,13 +27,14 @@ library(ggforce)
 library(ggrepel)
 library(clusterProfiler)
 library(org.Hs.eg.db)
+library(stringr)
 
 
 # GEO data set load local downloaded files
 
-gset1 <- getGEO(filename = "GSE47908_series_matrix.txt.gz", getGPL = FALSE) # RMA
-gset2 <- getGEO(filename = "GSE20916_series_matrix.txt.gz", getGPL = FALSE) # RMA
-gset3 <- getGEO(filename = "GSE37283_series_matrix.txt.gz", getGPL = FALSE) # RMA
+gset1 <- getGEO(filename = "GEO_Datasets/GSE47908_series_matrix.txt.gz", getGPL = FALSE) # RMA
+gset2 <- getGEO(filename = "GEO_Datasets/GSE20916_series_matrix.txt.gz", getGPL = FALSE) # RMA
+gset3 <- getGEO(filename = "GEO_Datasets/GSE37283_series_matrix.txt.gz", getGPL = FALSE) # RMA
 
 # meta data
 
@@ -495,8 +496,8 @@ batch_corrected_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Gro
 source("scripts/deg_functions.R")
 
 # Contrast selection for differential expression analysis
-custom_contrasts <- c(
-  "LSC_vs_HC = LSC - HC", # inflammatory signatures
+custom_contrasts <- c(        # Step-wise Comparison for (local shift at each stage progression)
+  "LSC_vs_HC = LSC - HC",     # best for diagnostic markers
   "PC_vs_LSC = PC - LSC",
   "qUC_vs_PC = qUC - PC",
   "UCD_vs_qUC = UCD - qUC",
@@ -504,6 +505,16 @@ custom_contrasts <- c(
   "CRC_vs_AD = CRC - AD",
   "CRC_vs_HC = CRC - HC"
 )
+
+custom_contrasts <- c(
+  "LSC_vs_HC   = LSC - HC",   # Cumulative Contrast (exp deviation from HC as disease accumulates) 
+  "PC_vs_HC    = PC  - HC",   # helps identify early vs late markers
+  "qUC_vs_HC   = qUC - HC",
+  "UCD_vs_HC   = UCD - HC",
+  "AD_vs_HC    = AD  - HC",
+  "CRC_vs_HC   = CRC - HC"
+)
+
 
 # Run DEG analysis with custom contrasts
 deg_out <- run_deg_analysis(
@@ -529,24 +540,27 @@ deg_CRC_HC <- deg_out$`CRC_vs_HC = CRC - HC`$full_result
 # for Up-reg
 
 up_LSC <- deg_out$`LSC_vs_HC = LSC - HC`$up
-up_PC <- 
+up_PC <- deg_out$`PC_vs_LSC = PC - LSC`$up
   
   
 # for Down-reg
   
 down_LSC <- deg_out$`LSC_vs_HC = LSC - HC`$down
-
+down_PC <- deg_out$`PC_vs_LSC = PC - LSC`$down
 
 # Get Gene Symbols
 
 # for full results
 genes_deg_LSC <- deg_LSC$Gene
+genes_deg_PC <- deg_PC$Gene
 
 # for up reg
 genes_up_LSC <- up_LSC$Gene
+genes_up_PC <- up_PC$Gene
 
 # for down reg
 genes_down_LSC <- down_LSC$Gene
+genes_down_PC <- down_PC$Gene
 
 # Fetch annotations via BioMart Function ---
 
@@ -568,20 +582,24 @@ get_entrez <- function(gene_list) {
 
 # for full results
 annot_LSC <- get_entrez(genes_deg_LSC)
+annot_PC <- get_entrez(genes_deg_PC)
 
 # for up-reg
 annot_up_LSC <- get_entrez(genes_up_LSC)
+annot_up_PC <- get_entrez(genes_up_PC)
 
 #for down-reg
 annot_down_LSC <- get_entrez(genes_down_LSC)
-
+annot_down_PC <- get_entrez(genes_down_PC)
 
 #---Merge annotations with DEG results----
 # for full results
 deg_out$`LSC_vs_HC = LSC - HC`$full_result <- left_join(deg_LSC,annot_LSC,by = c("Gene" = "external_gene_name"))
+deg_out$`PC_vs_LSC = PC - LSC`$full_result <- left_join(deg_PC,annot_PC,by = c("Gene" = "external_gene_name"))
 
 # for up-reg
 deg_out$`LSC_vs_HC = LSC - HC`$up <- left_join(up_LSC,annot_up_LSC,by = c("Gene" = "external_gene_name"))
+deg_out$`PC_vs_LSC = PC - LSC`$up <- left_join(up_PC,annot_up_PC,by = c("Gene" = "external_gene_name"))
 
 # for down-reg
 
@@ -591,8 +609,12 @@ deg_out$`LSC_vs_HC = LSC - HC`$up <- left_join(up_LSC,annot_up_LSC,by = c("Gene"
 
 # Prepare your named gene list (Entrez IDs per contrast)
 
+LSC_vs_HC <- deg_out$`LSC_vs_HC = LSC - HC`$up
+PC_vs_LSC <- deg_out$`PC_vs_LSC = PC - LSC`$up
+
 gene_list_Up <- list(
-  LSC_vs_HC <- deg_out$`LSC_vs_HC = LSC - HC`$up
+  LSC_vs_HC = LSC_vs_HC[!is.na(LSC_vs_HC$entrezgene_id), "entrezgene_id"],
+  PC_vs_LSC = PC_vs_LSC[!is.na(PC_vs_LSC$entrezgene_id), "entrezgene_id"]
 )
 
 ##---Ontology enrichment results for all diseases----
@@ -611,6 +633,71 @@ go_compare_BP_up <- compareCluster(
   readable = TRUE
 )
 
+#---Visualizations for GO > BP > UP----
 
+# Convert to data frame
+GO_BP_data <- go_compare_BP_up@compareClusterResult
 
+# Optional: keep top N per disease group
+GO_BP_filter <- GO_BP_data %>%
+  group_by(Cluster) %>%
+  slice_min(order_by = p.adjust, n = 5) %>%
+  ungroup()
 
+# Extract & Preprocess Results
+
+# Wrap GO term names for readability
+GO_BP_filter$Description <- str_wrap(GO_BP_filter$Description, width = 40)
+
+# Reorder descriptions within clusters
+GO_BP_filter <- GO_BP_filter %>%
+  group_by(Cluster) %>%
+  arrange(p.adjust, .by_group = TRUE) %>%
+  ungroup()
+
+# Make Description a factor to retain order
+GO_BP_filter$Description <- factor(GO_BP_filter$Description, levels = rev(unique(GO_BP_filter$Description)))
+
+# Dot plot visualization for BP
+ggplot(GO_BP_filter, aes(x = -log10(p.adjust), y = Description, color = Cluster)) +
+  geom_point(aes(size = Count)) +
+  facet_wrap(~ Cluster, scales = "free_y") +
+  scale_color_manual(values = c(
+    "LSC_vs_HC" = "#E41A1C",
+    "PC_vs_LSC" = "#377EB8"
+  )) +
+  labs(
+    title = "GO Enrichment Comparison (BP, Up-regulated Genes)",
+    x = expression(-log[10]("p.adjust")),
+    y = "GO Term",
+    size = "Gene Count"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    axis.text.y = element_text(size = 10),
+    legend.position = "right",
+    strip.text = element_text(face = "bold", size = 12)
+  )
+
+# Another method - Dotplot from clusterProfiler
+
+source("scripts/enrichment_functions.R")
+
+# UP
+annot_up_LSC
+annot_up_PC
+
+# Run enrichment on all up reg stages
+
+enrichments <- run_hub_enrichment(
+  annot_up_LSC,
+  save_results = TRUE,
+  output_dir = "results/emrichment_LSCvsHC"
+)
+
+enrichments <- run_hub_enrichment(
+  annot_up_LSC,
+  save_results = TRUE,
+  output_dir = "results/emrichment_PCvsLSC"
+)
