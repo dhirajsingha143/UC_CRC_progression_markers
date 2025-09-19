@@ -14,6 +14,7 @@ BiocManager::install("ggforce")
 BiocManager::install("ggrepel")
 BiocManager::install("clusterProfiler")
 BiocManager::install("org.Hs.eg.db")
+BiocManager::install("ReactomePA")
 
 # load packages
 library(GEOquery)
@@ -28,6 +29,7 @@ library(ggrepel)
 library(clusterProfiler)
 library(org.Hs.eg.db)
 library(stringr)
+library(ReactomePA)
 
 
 # GEO data set load local downloaded files
@@ -54,14 +56,14 @@ meta1$`disease state:ch1` <- make.names(meta1$`disease state:ch1`)
 meta1$title <- make.names(meta1$title)
 
 meta1_clean <- meta1 %>% 
-  select(1,32) %>% 
-  rename(condition = `disease state:ch1`) %>%
-  mutate(condition = gsub("left.sided.coltis","LSC",condition)) %>% 
-  mutate(condition = gsub("pancolitis","PC",condition)) %>% 
-  mutate(condition = gsub("ulcerative.colitis.associated.dysplasia","UCD",condition)) %>% 
-  mutate(condition = gsub("control","HC",condition)) %>% 
-  mutate(title = gsub(".\\d+$","",title)) %>% 
-  mutate(batch = "1")
+  dplyr::select(1,32) %>% 
+  dplyr::rename(condition = colnames(meta1)[32]) %>%
+  dplyr::mutate(condition = gsub("left.sided.coltis","LSC",condition)) %>% 
+  dplyr::mutate(condition = gsub("pancolitis","PC",condition)) %>% 
+  dplyr::mutate(condition = gsub("ulcerative.colitis.associated.dysplasia","UCD",condition)) %>% 
+  dplyr::mutate(condition = gsub("control","HC",condition)) %>% 
+  dplyr::mutate(title = gsub(".\\d+$","",title)) %>% 
+  dplyr::mutate(batch = "1")
 
 group1 <- factor(meta1_clean$condition, levels = c("HC","LSC","PC","UCD"))
 
@@ -69,14 +71,14 @@ group1 <- factor(meta1_clean$condition, levels = c("HC","LSC","PC","UCD"))
 meta2$`tissue:ch1` <- make.names(meta2$`tissue:ch1`)
 
 meta2_clean <- meta2 %>% 
-  select(1,41) %>%
-  filter(!grepl("normal.colon",`tissue:ch1`)) %>%
-  filter(!grepl("colon.tumor",`tissue:ch1`)) %>%
-  rename(condition = `tissue:ch1`) %>% 
-  mutate(condition = gsub("adenoma","AD",condition)) %>% 
-  mutate(condition = gsub("adenocarcinoma","CRC",condition)) %>% 
-  mutate(title = gsub("_\\d+$","",title)) %>% 
-  mutate(batch = "2")
+  dplyr::select(1,41) %>%
+  dplyr::filter(!grepl("normal.colon",`tissue:ch1`)) %>%
+  dplyr::filter(!grepl("colon.tumor",`tissue:ch1`)) %>%
+  dplyr::rename(condition = `tissue:ch1`) %>% 
+  dplyr::mutate(condition = gsub("adenoma","AD",condition)) %>% 
+  dplyr::mutate(condition = gsub("adenocarcinoma","CRC",condition)) %>% 
+  dplyr::mutate(title = gsub("_\\d+$","",title)) %>% 
+  dplyr::mutate(batch = "2")
 
 group2 <- factor(meta2_clean$condition, levels = c("AD","CRC"))
 
@@ -84,12 +86,12 @@ group2 <- factor(meta2_clean$condition, levels = c("AD","CRC"))
 meta3$source_name_ch1 <- make.names(meta3$source_name_ch1)
 
 meta3_clean <- meta3 %>% 
-  select(1,8) %>% 
-  rename(condition = source_name_ch1) %>%
-  mutate(condition = gsub("quiescent.ulcerative.colitis","qUC",condition)) %>%
-  mutate(condition = gsub("normal.control","HC",condition)) %>%
-  mutate(condition = gsub("ulcerative.colitis.with.neoplasia","UCD",condition)) %>%
-  mutate(batch = "3")
+  dplyr::select(1,8) %>% 
+  dplyr::rename(condition = source_name_ch1) %>%
+  dplyr::mutate(condition = gsub("quiescent.ulcerative.colitis","qUC",condition)) %>%
+  dplyr::mutate(condition = gsub("normal.control","HC",condition)) %>%
+  dplyr::mutate(condition = gsub("ulcerative.colitis.with.neoplasia","UCD",condition)) %>%
+  dplyr::mutate(batch = "3")
 
 group3 <- factor(meta3_clean$condition, levels = c("HC","qUC","UCD"))
 
@@ -509,7 +511,6 @@ custom_contrasts <- c(        # Step-wise Comparison for (local shift at each st
 custom_contrasts <- c(
   "LSC_vs_HC   = LSC - HC",   # Cumulative Contrast (exp deviation from HC as disease accumulates) 
   "PC_vs_HC    = PC  - HC",   # helps identify early vs late markers
-  "qUC_vs_HC   = qUC - HC",
   "UCD_vs_HC   = UCD - HC",
   "AD_vs_HC    = AD  - HC",
   "CRC_vs_HC   = CRC - HC"
@@ -526,43 +527,27 @@ deg_out <- run_deg_analysis(
   contrasts_list = custom_contrasts
 )
 
-#---Retrieve full DEG tables into vectors----
 
-# for full results
-deg_LSC <- deg_out$`LSC_vs_HC = LSC - HC`$full_result
-deg_PC <- deg_out$`PC_vs_LSC = PC - LSC`$full_result
-deg_qUC <- deg_out$`qUC_vs_PC = qUC - PC`$full_result
-deg_UCD <- deg_out$`UCD_vs_qUC = UCD - qUC`$full_result
-deg_AD <- deg_out$`AD_vs_UCD = AD - UCD`$full_result
-deg_CRC <- deg_out$`CRC_vs_AD = CRC - AD`$full_result
-deg_CRC_HC <- deg_out$`CRC_vs_HC = CRC - HC`$full_result
+--------------------------------------------------------------------------------
+# Get Gene Symbols of DEGs-regulations
 
-# for Up-reg
-
-up_LSC <- deg_out$`LSC_vs_HC = LSC - HC`$up
-up_PC <- deg_out$`PC_vs_LSC = PC - LSC`$up
-  
-  
-# for Down-reg
-  
-down_LSC <- deg_out$`LSC_vs_HC = LSC - HC`$down
-down_PC <- deg_out$`PC_vs_LSC = PC - LSC`$down
-
-# Get Gene Symbols
-
-# for full results
-genes_deg_LSC <- deg_LSC$Gene
-genes_deg_PC <- deg_PC$Gene
-
+# HC contrast
 # for up reg
-genes_up_LSC <- up_LSC$Gene
-genes_up_PC <- up_PC$Gene
+genes_up_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$up$Gene
+genes_up_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$up$Gene
+genes_up_UCD <- deg_out$`UCD_vs_HC   = UCD - HC`$up$Gene
+genes_up_AD <- deg_out$`AD_vs_HC    = AD  - HC`$up$Gene
+genes_up_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$up$Gene
 
 # for down reg
-genes_down_LSC <- down_LSC$Gene
-genes_down_PC <- down_PC$Gene
+genes_down_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$down$Gene
+genes_down_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$down$Gene
+genes_down_UCD <- deg_out$`UCD_vs_HC   = UCD - HC`$down$Gene
+genes_down_AD <- deg_out$`AD_vs_HC    = AD  - HC`$down$Gene
+genes_down_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$down$Gene
 
-# Fetch annotations via BioMart Function ---
+--------------------------------------------------------------------------------
+# Fetch annotations via BiomaRt Function ---
 
 # Connect to Ensembl
 ensembl <- useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
@@ -580,124 +565,165 @@ get_entrez <- function(gene_list) {
 
 #---Fetch Entrez IDs for each disease----
 
-# for full results
-annot_LSC <- get_entrez(genes_deg_LSC)
-annot_PC <- get_entrez(genes_deg_PC)
-
-# for up-reg
+# for Up-reg
 annot_up_LSC <- get_entrez(genes_up_LSC)
 annot_up_PC <- get_entrez(genes_up_PC)
+annot_up_UCD <- get_entrez(genes_up_UCD)
+annot_up_AD <- get_entrez(genes_up_AD)
+annot_up_CRC <- get_entrez(genes_up_CRC)
 
-#for down-reg
+# for Down-reg
 annot_down_LSC <- get_entrez(genes_down_LSC)
 annot_down_PC <- get_entrez(genes_down_PC)
+annot_down_UCD <- get_entrez(genes_down_UCD)
+annot_down_AD <- get_entrez(genes_down_AD)
+annot_down_CRC <- get_entrez(genes_down_CRC)
 
-#---Merge annotations with DEG results----
-# for full results
-deg_out$`LSC_vs_HC = LSC - HC`$full_result <- left_join(deg_LSC,annot_LSC,by = c("Gene" = "external_gene_name"))
-deg_out$`PC_vs_LSC = PC - LSC`$full_result <- left_join(deg_PC,annot_PC,by = c("Gene" = "external_gene_name"))
+#---Enrichment Analysis (GO/KEGG/Reactome)----
+# UP DEG table entreze id annotated
+annot_up_LSC <- inner_join(annot_up_LSC, deg_out$`LSC_vs_HC   = LSC - HC`$up, by = c("external_gene_name" = "Gene"))
+annot_up_PC <- inner_join(annot_up_PC, deg_out$`PC_vs_HC    = PC  - HC`$up, by = c("external_gene_name" = "Gene"))
+annot_up_UCD <- inner_join(annot_up_UCD, deg_out$`UCD_vs_HC   = UCD - HC`$up, by = c("external_gene_name" = "Gene"))
+annot_up_AD <- inner_join(annot_up_AD, deg_out$`AD_vs_HC    = AD  - HC`$up, by = c("external_gene_name" = "Gene"))
+annot_up_CRC <- inner_join(annot_up_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$up, by = c("external_gene_name" = "Gene"))
 
-# for up-reg
-deg_out$`LSC_vs_HC = LSC - HC`$up <- left_join(up_LSC,annot_up_LSC,by = c("Gene" = "external_gene_name"))
-deg_out$`PC_vs_LSC = PC - LSC`$up <- left_join(up_PC,annot_up_PC,by = c("Gene" = "external_gene_name"))
+# DOWN DEG table entreze id annotated
+annot_down_LSC <- inner_join(annot_down_LSC, deg_out$`LSC_vs_HC   = LSC - HC`$down, by = c("external_gene_name" = "Gene"))
+annot_down_PC <- inner_join(annot_down_PC, deg_out$`PC_vs_HC    = PC  - HC`$down, by = c("external_gene_name" = "Gene"))
+annot_down_UCD <- inner_join(annot_down_UCD, deg_out$`UCD_vs_HC   = UCD - HC`$down, by = c("external_gene_name" = "Gene"))
+annot_down_AD <- inner_join(annot_down_AD, deg_out$`AD_vs_HC    = AD  - HC`$down, by = c("external_gene_name" = "Gene"))
+annot_down_CRC <- inner_join(annot_down_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$down, by = c("external_gene_name" = "Gene"))
 
-# for down-reg
+source("scripts/try.R")
+#-------------------------------------------------------------------------------
+# UP genes LSC
+fc_values <- annot_up_LSC$logFC
+names(fc_values) <- annot_up_LSC$external_gene_name   # make sure IDs match enrichment
 
-
-#---Enrichment Analysis (Gene Ontology)----
-# Perform GO enrichment analysis
-
-# Prepare your named gene list (Entrez IDs per contrast)
-
-LSC_vs_HC <- deg_out$`LSC_vs_HC = LSC - HC`$up
-PC_vs_LSC <- deg_out$`PC_vs_LSC = PC - LSC`$up
-
-gene_list_Up <- list(
-  LSC_vs_HC = LSC_vs_HC[!is.na(LSC_vs_HC$entrezgene_id), "entrezgene_id"],
-  PC_vs_LSC = PC_vs_LSC[!is.na(PC_vs_LSC$entrezgene_id), "entrezgene_id"]
+res <- run_enrichment(
+  gene_list  = annot_up_LSC$entrezgene_id,  # Entrez IDs of DEGs table
+  fc_values  = fc_values,                   # gene vector of logFC values
+  prefix     = "LSC_vs_HC_up",              # File naming prefix
+  outdir     = "results/LSC_vs_HC/UP",      # dir name
+  showCategory = 15,
+  save_tables = TRUE
 )
 
-##---Ontology enrichment results for all diseases----
-gene_list_Up_entrez <- lapply(gene_list_Up, function(x) {
-  mapped <- bitr(x, fromType = "Gene", toType = "entrezgene_id", OrgDb = org.Hs.eg.db)
-  unique(mapped$ENTREZID)
-})
+# DOWN genes LSC
+fc_values <- annot_down_LSC$logFC
+names(fc_values) <- annot_down_LSC$external_gene_name 
 
-#---GO > BP > UP----
-go_compare_BP_up <- compareCluster(
-  geneCluster = gene_list_Up,
-  fun = "enrichGO",
-  OrgDb = org.Hs.eg.db,
-  ont = "BP", # or "MF", "CC", or "ALL"
-  pvalueCutoff = 0.05,
-  readable = TRUE
+res <- run_enrichment(
+  gene_list  = annot_down_LSC$entrezgene_id,
+  fc_values  = fc_values,                     
+  prefix     = "LSC_vs_HC_down",              
+  outdir     = "results/LSC_vs_HC/DOWN",      
+  showCategory = 15,
+  save_tables = TRUE
 )
 
-#---Visualizations for GO > BP > UP----
+# UP genes PC
+fc_values <- annot_up_PC$logFC
+names(fc_values) <- annot_up_PC$external_gene_name
 
-# Convert to data frame
-GO_BP_data <- go_compare_BP_up@compareClusterResult
-
-# Optional: keep top N per disease group
-GO_BP_filter <- GO_BP_data %>%
-  group_by(Cluster) %>%
-  slice_min(order_by = p.adjust, n = 5) %>%
-  ungroup()
-
-# Extract & Preprocess Results
-
-# Wrap GO term names for readability
-GO_BP_filter$Description <- str_wrap(GO_BP_filter$Description, width = 40)
-
-# Reorder descriptions within clusters
-GO_BP_filter <- GO_BP_filter %>%
-  group_by(Cluster) %>%
-  arrange(p.adjust, .by_group = TRUE) %>%
-  ungroup()
-
-# Make Description a factor to retain order
-GO_BP_filter$Description <- factor(GO_BP_filter$Description, levels = rev(unique(GO_BP_filter$Description)))
-
-# Dot plot visualization for BP
-ggplot(GO_BP_filter, aes(x = -log10(p.adjust), y = Description, color = Cluster)) +
-  geom_point(aes(size = Count)) +
-  facet_wrap(~ Cluster, scales = "free_y") +
-  scale_color_manual(values = c(
-    "LSC_vs_HC" = "#E41A1C",
-    "PC_vs_LSC" = "#377EB8"
-  )) +
-  labs(
-    title = "GO Enrichment Comparison (BP, Up-regulated Genes)",
-    x = expression(-log[10]("p.adjust")),
-    y = "GO Term",
-    size = "Gene Count"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
-    axis.text.y = element_text(size = 10),
-    legend.position = "right",
-    strip.text = element_text(face = "bold", size = 12)
-  )
-
-# Another method - Dotplot from clusterProfiler
-
-source("scripts/enrichment_functions.R")
-
-# UP
-annot_up_LSC
-annot_up_PC
-
-# Run enrichment on all up reg stages
-
-enrichments <- run_hub_enrichment(
-  annot_up_LSC,
-  save_results = TRUE,
-  output_dir = "results/emrichment_LSCvsHC"
+res <- run_enrichment(
+  gene_list  = annot_up_PC$entrezgene_id,  
+  fc_values  = fc_values,                   
+  prefix     = "PC_vs_HC_up",              
+  outdir     = "results/PC_vs_HC/UP",      
+  showCategory = 15,
+  save_tables = TRUE
 )
 
-enrichments <- run_hub_enrichment(
-  annot_up_LSC,
-  save_results = TRUE,
-  output_dir = "results/emrichment_PCvsLSC"
+# DOWN genes PC
+fc_values <- annot_down_PC$logFC
+names(fc_values) <- annot_down_PC$external_gene_name
+
+res <- run_enrichment(
+  gene_list  = annot_down_PC$entrezgene_id,
+  fc_values  = fc_values,                     
+  prefix     = "PC_vs_HC_down",              
+  outdir     = "results/PC_vs_HC/DOWN",      
+  showCategory = 15,
+  save_tables = TRUE
 )
+
+# UP genes UCD
+fc_values <- annot_up_UCD$logFC
+names(fc_values) <- annot_up_UCD$external_gene_name
+
+res <- run_enrichment(
+  gene_list  = annot_up_UCD$entrezgene_id,  
+  fc_values  = fc_values,                   
+  prefix     = "UCD_vs_HC_up",              
+  outdir     = "results/UCD_vs_HC/UP",      
+  showCategory = 15,
+  save_tables = TRUE
+)
+
+# DOWN genes UCD
+fc_values <- annot_down_UCD$logFC
+names(fc_values) <- annot_down_UCD$external_gene_name
+
+res <- run_enrichment(
+  gene_list  = annot_down_UCD$entrezgene_id,
+  fc_values  = fc_values,                     
+  prefix     = "UCD_vs_HC_down",              
+  outdir     = "results/UCD_vs_HC/DOWN",      
+  showCategory = 15,
+  save_tables = TRUE
+)
+
+# UP genes AD
+fc_values <- annot_up_AD$logFC
+names(fc_values) <- annot_up_AD$external_gene_name
+
+res <- run_enrichment(
+  gene_list  = annot_up_AD$entrezgene_id,  
+  fc_values  = fc_values,                   
+  prefix     = "AD_vs_HC_up",              
+  outdir     = "results/AD_vs_HC/UP",      
+  showCategory = 15,
+  save_tables = TRUE
+)
+
+# DOWN genes AD
+fc_values <- annot_down_AD$logFC
+names(fc_values) <- annot_down_AD$external_gene_name
+
+res <- run_enrichment(
+  gene_list  = annot_down_AD$entrezgene_id,
+  fc_values  = fc_values,                     
+  prefix     = "AD_vs_HC_down",              
+  outdir     = "results/AD_vs_HC/DOWN",      
+  showCategory = 15,
+  save_tables = TRUE
+)
+
+# UP genes CRC
+fc_values <- annot_up_CRC$logFC
+names(fc_values) <- annot_up_CRC$external_gene_name
+
+res <- run_enrichment(
+  gene_list  = annot_up_CRC$entrezgene_id,  
+  fc_values  = fc_values,                   
+  prefix     = "CRC_vs_HC_up",              
+  outdir     = "results/CRC_vs_HC/UP",      
+  showCategory = 15,
+  save_tables = TRUE
+)
+
+# DOWN genes CRC
+fc_values <- annot_down_CRC$logFC
+names(fc_values) <- annot_down_CRC$external_gene_name
+
+res <- run_enrichment(
+  gene_list  = annot_down_CRC$entrezgene_id,
+  fc_values  = fc_values,                     
+  prefix     = "CRC_vs_HC_down",              
+  outdir     = "results/CRC_vs_HC/DOWN",      
+  showCategory = 15,
+  save_tables = TRUE
+)
+
+#--------------------------------------------------------------------------------
