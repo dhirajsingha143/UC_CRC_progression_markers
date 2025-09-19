@@ -594,7 +594,7 @@ annot_down_UCD <- inner_join(annot_down_UCD, deg_out$`UCD_vs_HC   = UCD - HC`$do
 annot_down_AD <- inner_join(annot_down_AD, deg_out$`AD_vs_HC    = AD  - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_CRC <- inner_join(annot_down_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$down, by = c("external_gene_name" = "Gene"))
 
-source("scripts/try.R")
+source("scripts/enrichment.R")
 #-------------------------------------------------------------------------------
 # UP genes LSC
 fc_values <- annot_up_LSC$logFC
@@ -727,3 +727,19 @@ res <- run_enrichment(
 )
 
 #--------------------------------------------------------------------------------
+
+
+
+
+
+
+
+# PPI-NETWORK ANALYSIS
+
+
+
+
+
+
+
+
