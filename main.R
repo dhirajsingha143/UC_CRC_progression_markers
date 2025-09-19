@@ -15,6 +15,8 @@ BiocManager::install("ggrepel")
 BiocManager::install("clusterProfiler")
 BiocManager::install("org.Hs.eg.db")
 BiocManager::install("ReactomePA")
+BiocManager::install("ComplexHeatmap")
+BiocManager::install("colorRamp2")
 
 # load packages
 library(GEOquery)
@@ -30,6 +32,8 @@ library(clusterProfiler)
 library(org.Hs.eg.db)
 library(stringr)
 library(ReactomePA)
+library(ComplexHeatmap)
+library(colorRamp2)
 
 
 # GEO data set load local downloaded files
@@ -594,6 +598,7 @@ annot_down_UCD <- inner_join(annot_down_UCD, deg_out$`UCD_vs_HC   = UCD - HC`$do
 annot_down_AD <- inner_join(annot_down_AD, deg_out$`AD_vs_HC    = AD  - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_CRC <- inner_join(annot_down_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$down, by = c("external_gene_name" = "Gene"))
 
+
 source("scripts/enrichment.R")
 #-------------------------------------------------------------------------------
 # UP genes LSC
@@ -604,7 +609,7 @@ res <- run_enrichment(
   gene_list  = annot_up_LSC$entrezgene_id,  # Entrez IDs of DEGs table
   fc_values  = fc_values,                   # gene vector of logFC values
   prefix     = "LSC_vs_HC_up",              # File naming prefix
-  outdir     = "results/LSC_vs_HC/UP",      # dir name
+  outdir     = "results/LSC_vs_HC/Enrichment/UP",      # dir name
   showCategory = 15,
   save_tables = TRUE
 )
@@ -617,7 +622,7 @@ res <- run_enrichment(
   gene_list  = annot_down_LSC$entrezgene_id,
   fc_values  = fc_values,                     
   prefix     = "LSC_vs_HC_down",              
-  outdir     = "results/LSC_vs_HC/DOWN",      
+  outdir     = "results/LSC_vs_HC/Enrichment/DOWN",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -630,7 +635,7 @@ res <- run_enrichment(
   gene_list  = annot_up_PC$entrezgene_id,  
   fc_values  = fc_values,                   
   prefix     = "PC_vs_HC_up",              
-  outdir     = "results/PC_vs_HC/UP",      
+  outdir     = "results/PC_vs_HC/Enrichment/UP",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -643,7 +648,7 @@ res <- run_enrichment(
   gene_list  = annot_down_PC$entrezgene_id,
   fc_values  = fc_values,                     
   prefix     = "PC_vs_HC_down",              
-  outdir     = "results/PC_vs_HC/DOWN",      
+  outdir     = "results/PC_vs_HC/Enrichment/DOWN",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -656,7 +661,7 @@ res <- run_enrichment(
   gene_list  = annot_up_UCD$entrezgene_id,  
   fc_values  = fc_values,                   
   prefix     = "UCD_vs_HC_up",              
-  outdir     = "results/UCD_vs_HC/UP",      
+  outdir     = "results/UCD_vs_HC/Enrichment/UP",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -669,7 +674,7 @@ res <- run_enrichment(
   gene_list  = annot_down_UCD$entrezgene_id,
   fc_values  = fc_values,                     
   prefix     = "UCD_vs_HC_down",              
-  outdir     = "results/UCD_vs_HC/DOWN",      
+  outdir     = "results/UCD_vs_HC/Enrichment/DOWN",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -682,7 +687,7 @@ res <- run_enrichment(
   gene_list  = annot_up_AD$entrezgene_id,  
   fc_values  = fc_values,                   
   prefix     = "AD_vs_HC_up",              
-  outdir     = "results/AD_vs_HC/UP",      
+  outdir     = "results/AD_vs_HC/Enrichment/UP",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -695,7 +700,7 @@ res <- run_enrichment(
   gene_list  = annot_down_AD$entrezgene_id,
   fc_values  = fc_values,                     
   prefix     = "AD_vs_HC_down",              
-  outdir     = "results/AD_vs_HC/DOWN",      
+  outdir     = "results/AD_vs_HC/Enrichment/DOWN",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -708,7 +713,7 @@ res <- run_enrichment(
   gene_list  = annot_up_CRC$entrezgene_id,  
   fc_values  = fc_values,                   
   prefix     = "CRC_vs_HC_up",              
-  outdir     = "results/CRC_vs_HC/UP",      
+  outdir     = "results/CRC_vs_HC/Enrichment/UP",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -721,7 +726,7 @@ res <- run_enrichment(
   gene_list  = annot_down_CRC$entrezgene_id,
   fc_values  = fc_values,                     
   prefix     = "CRC_vs_HC_down",              
-  outdir     = "results/CRC_vs_HC/DOWN",      
+  outdir     = "results/CRC_vs_HC/Enrichment/DOWN",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -733,13 +738,439 @@ res <- run_enrichment(
 
 
 
+#---Heat Map Generation for DEG Expressions----
 
-# PPI-NETWORK ANALYSIS
+top_genes <- unique(c(
+  annot_up_LSC$external_gene_name,
+  annot_down_LSC$external_gene_name,
+  annot_up_PC$external_gene_name,
+  annot_down_PC$external_gene_name,
+  annot_up_UCD$external_gene_name,
+  annot_down_UCD$external_gene_name,
+  annot_up_AD$external_gene_name,
+  annot_down_AD$external_gene_name,
+  annot_up_CRC$external_gene_name,
+  annot_down_CRC$external_gene_name
+))
+
+heat_expr_mat <- integrated_expr_data[top_genes, ]
+
+#rownames(gene_row_group) <- gene_row_group$gene
+
+# Arrange samples by disease then batch
+sample_order <- integrated_meta_data %>%
+  arrange(condition, batch) %>%
+  rownames()
+
+# Reorder expression matrix
+heat_expr_mat <- heat_expr_mat[, integrated_meta_data$sample_id]
+
+# Reorder sample annotation
+annotation_col <- integrated_meta_data[integrated_meta_data$sample_id,]
+
+# Column annotations
+col_ha <- HeatmapAnnotation(
+  Disease = annotation_col$condition,
+  Batch = annotation_col$batch,
+  col = list(
+    Disease = c("HC"  = "gray",
+                "LSC" = "green",
+                "PC"  = "orange",
+                "qUC" = "yellow",
+                "UCD" = "red",
+                "AD"  = "blue",
+                "CRC" = "purple"
+    ),
+    Batch = c("1" = "salmon", "2" = "gold", "3" = "lightblue")
+  ),
+  annotation_height = unit(6, "mm")
+)
+
+# Row scaling (z-score)
+heat_z <- t(scale(t(as.matrix(heat_expr_mat))))
+
+Heatmap(
+  heat_z,
+  name = "Z-score",
+  top_annotation = col_ha,
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,
+  show_column_names = TRUE,
+  show_row_names = TRUE,
+  row_title_gp = gpar(fontsize = 10, fontface = "bold"),
+  column_split = annotation_col$disease,  # optional: facet columns by disease
+  col = colorRamp2(c(-2, 0, 2), c("navy", "white", "firebrick")),
+  heatmap_legend_param = list(title = "Expression"),
+  row_names_gp = gpar(fontsize = 4.5),        # Gene names (rows)
+  column_names_gp = gpar(fontsize = 5)
+)
+
+# Box Plot of Mean DEG Expression per Sample by Disease
+
+# Explicitly reorder disease levels
+integrated_meta_data$condition <- factor(integrated_meta_data$condition,
+                                       levels = c("HC", "LSC", "PC", "qUC", "UCD","AD","CRC"))
+
+# Recalculate sample-wise means (if not already)
+sample_means <- colMeans(heat_expr_mat)
+
+# Plot
+boxplot(sample_means ~ integrated_meta_data$condition,
+        ylab = "Mean Z-score Expression",
+        xlab = "Disease",
+        main = "Mean DEG Expression per Sample by Disease",
+        col = c("orange", "green", "purple", "cyan", "gray","lightblue","pink"),)
+
+#--------------------------------------------------------------------------
+# PPI Network Analysis
+# Load the functions for PPI network analysis
+source("scripts/PPI_functions.R")
+
+#===PPI > LSC_vs_HC====
+# Process Multiple Regulation per contrasts matrix
+
+## up-regulation
+
+# Building PPI network
+network_LSC_vs_HC_up <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "LSC_vs_HC   = LSC - HC",
+  regulation = "up",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/LSC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_LSC_vs_HC_up <- identify_hub_genes(
+  g = network_LSC_vs_HC_up$graph,
+  condition = "LSC_vs_HC   = LSC - HC",
+  regulation = "up",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/LSC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_LSC_vs_HC_up <- detect_ppi_modules(
+  g = network_LSC_vs_HC_up$graph,
+  condition = "LSC_vs_HC   = LSC - HC",
+  regulation = "up", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/LSC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+## down-regulation
+
+# Building PPI network
+network_LSC_vs_HC_down <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "LSC_vs_HC   = LSC - HC",
+  regulation = "down",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/LSC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_LSC_vs_HC_down <- identify_hub_genes(
+  g = network_LSC_vs_HC_down$graph,
+  condition = "LSC_vs_HC   = LSC - HC",
+  regulation = "down",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/LSC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_LSC_vs_HC_down <- detect_ppi_modules(
+  g = network_LSC_vs_HC_down$graph,
+  condition = "LSC_vs_HC   = LSC - HC",
+  regulation = "down", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/LSC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
 
 
+#===PPI > PC_vs_HC====
+# Process Multiple Regulation per contrasts matrix
+
+## up-regulation
+
+# Building PPI network
+network_PC_vs_HC_up <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "PC_vs_HC    = PC  - HC",
+  regulation = "up",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/PC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_PC_vs_HC_up <- identify_hub_genes(
+  g = network_PC_vs_HC_up$graph,
+  condition = "PC_vs_HC    = PC  - HC",
+  regulation = "up",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/PC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_PC_vs_HC_up <- detect_ppi_modules(
+  g = network_PC_vs_HC_up$graph,
+  condition = "PC_vs_HC    = PC  - HC",
+  regulation = "up", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/PC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+## down-regulation _pending processing
+
+# Building PPI network
+network_PC_vs_HC_down <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "PC_vs_HC    = PC  - HC",
+  regulation = "down",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/PC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_PC_vs_HC_down <- identify_hub_genes(
+  g = network_PC_vs_HC_down$graph,
+  condition = "PC_vs_HC    = PC  - HC",
+  regulation = "down",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/PC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_PC_vs_HC_down <- detect_ppi_modules(
+  g = network_PC_vs_HC_down$graph,
+  condition = "PC_vs_HC    = PC  - HC",
+  regulation = "down", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/PC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
 
 
+#===PPI > UCD_vs_HC====
+# Process Multiple Regulation per contrasts matrix
+
+## up-regulation
+
+# Building PPI network
+network_UCD_vs_HC_up <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "UCD_vs_HC   = UCD - HC",
+  regulation = "up",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/UCD_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_UCD_vs_HC_up <- identify_hub_genes(
+  g = network_UCD_vs_HC_up$graph,
+  condition = "UCD_vs_HC   = UCD - HC",
+  regulation = "up",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/UCD_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_UCD_vs_HC_up <- detect_ppi_modules(
+  g = network_UCD_vs_HC_up$graph,
+  condition = "UCD_vs_HC   = UCD - HC",
+  regulation = "up", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/UCD_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+## down-regulation
+
+# Building PPI network
+network_UCD_vs_HC_down <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "UCD_vs_HC   = UCD - HC",
+  regulation = "down",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/UCD_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_UCD_vs_HC_down <- identify_hub_genes(
+  g = network_UCD_vs_HC_down$graph,
+  condition = "UCD_vs_HC   = UCD - HC",
+  regulation = "down",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/UCD_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_UCD_vs_HC_down <- detect_ppi_modules(
+  g = network_UCD_vs_HC_down$graph,
+  condition = "UCD_vs_HC   = UCD - HC",
+  regulation = "down", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/UCD_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
 
 
+#===PPI > AD_vs_HC====
+# Process Multiple Regulation per contrasts matrix
+
+## up-regulation
+
+# Building PPI network
+network_AD_vs_HC_up <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "AD_vs_HC    = AD  - HC",
+  regulation = "up",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/AD_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_AD_vs_HC_up <- identify_hub_genes(
+  g = network_AD_vs_HC_up$graph,
+  condition = "AD_vs_HC    = AD  - HC",
+  regulation = "up",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/AD_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_AD_vs_HC_up <- detect_ppi_modules(
+  g = network_AD_vs_HC_up$graph,
+  condition = "AD_vs_HC    = AD  - HC",
+  regulation = "up", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/AD_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+## down-regulation
+
+# Building PPI network
+network_AD_vs_HC_down <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "AD_vs_HC    = AD  - HC",
+  regulation = "down",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/AD_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_AD_vs_HC_down <- identify_hub_genes(
+  g = network_AD_vs_HC_down$graph,
+  condition = "AD_vs_HC    = AD  - HC",
+  regulation = "down",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/AD_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_AD_vs_HC_down <- detect_ppi_modules(
+  g = network_AD_vs_HC_down$graph,
+  condition = "AD_vs_HC    = AD  - HC",
+  regulation = "down", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/AD_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+#===PPI > CRC_vs_HC====
+
+## up-regulation
+
+# Building PPI network
+network_CRC_vs_HC_up <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "CRC_vs_HC   = CRC - HC",
+  regulation = "up",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/CRC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_CRC_vs_HC_up <- identify_hub_genes(
+  g = network_CRC_vs_HC_up$graph,
+  condition = "CRC_vs_HC   = CRC - HC",
+  regulation = "up",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/CRC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_CRC_vs_HC_up <- detect_ppi_modules(
+  g = network_CRC_vs_HC_up$graph,
+  condition = "CRC_vs_HC   = CRC - HC",
+  regulation = "up", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/CRC_vs_HC/PPI/UP",
+  return_plot = TRUE
+)
+
+## down-regulation
+
+# Building PPI network
+network_CRC_vs_HC_down <- build_ppi_network(
+  deg_out = deg_out,
+  condition = "CRC_vs_HC   = CRC - HC",
+  regulation = "down",  # Options: "up" , "down"
+  top_n = 100,
+  save = TRUE,
+  out_dir = "results/CRC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Identify hub genes
+hubs_CRC_vs_HC_down <- identify_hub_genes(
+  g = network_AD_vs_HC_down$graph,
+  condition = "CRC_vs_HC   = CRC - HC",
+  regulation = "down",  # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/CRC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
+
+# Detect modules
+modules_CRC_vs_HC_down <- detect_ppi_modules(
+  g = network_AD_vs_HC_down$graph,
+  condition = "CRC_vs_HC   = CRC - HC",
+  regulation = "down", # Options: "up" , "down"
+  save = TRUE,
+  out_dir = "results/CRC_vs_HC/PPI/DOWN",
+  return_plot = TRUE
+)
 
 
