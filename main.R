@@ -735,11 +735,6 @@ res <- run_enrichment(
 
 #--------------------------------------------------------------------------------
 
-
-
-
-
-
 #---Heat Map Generation for DEG Expressions----
 
 top_genes <- unique(c(
@@ -796,11 +791,11 @@ Heatmap(
   name = "Z-score",
   top_annotation = col_ha,
   cluster_rows = TRUE,
-  cluster_columns = FALSE,
+  cluster_columns = TRUE,
   show_column_names = TRUE,
   show_row_names = TRUE,
   row_title_gp = gpar(fontsize = 10, fontface = "bold"),
-  column_split = annotation_col$disease,  # optional: facet columns by disease
+  column_split = annotation_col$condition,  # optional: facet columns by disease
   col = colorRamp2(c(-2, 0, 2), c("navy", "white", "firebrick")),
   heatmap_legend_param = list(title = "Expression"),
   row_names_gp = gpar(fontsize = 4.5),        # Gene names (rows)
@@ -839,7 +834,7 @@ network_LSC_vs_HC_up <- build_ppi_network(
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/LSC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -849,7 +844,7 @@ hubs_LSC_vs_HC_up <- identify_hub_genes(
   g = network_LSC_vs_HC_up$graph,
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "up",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/LSC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -859,7 +854,7 @@ modules_LSC_vs_HC_up <- detect_ppi_modules(
   g = network_LSC_vs_HC_up$graph,
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "up", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/LSC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -872,7 +867,7 @@ network_LSC_vs_HC_down <- build_ppi_network(
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/LSC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -882,7 +877,7 @@ hubs_LSC_vs_HC_down <- identify_hub_genes(
   g = network_LSC_vs_HC_down$graph,
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "down",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/LSC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -892,7 +887,7 @@ modules_LSC_vs_HC_down <- detect_ppi_modules(
   g = network_LSC_vs_HC_down$graph,
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "down", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/LSC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -909,7 +904,7 @@ network_PC_vs_HC_up <- build_ppi_network(
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/PC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -919,7 +914,7 @@ hubs_PC_vs_HC_up <- identify_hub_genes(
   g = network_PC_vs_HC_up$graph,
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "up",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/PC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -929,7 +924,7 @@ modules_PC_vs_HC_up <- detect_ppi_modules(
   g = network_PC_vs_HC_up$graph,
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "up", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/PC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -942,7 +937,7 @@ network_PC_vs_HC_down <- build_ppi_network(
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/PC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -952,7 +947,7 @@ hubs_PC_vs_HC_down <- identify_hub_genes(
   g = network_PC_vs_HC_down$graph,
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "down",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/PC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -962,7 +957,7 @@ modules_PC_vs_HC_down <- detect_ppi_modules(
   g = network_PC_vs_HC_down$graph,
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "down", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/PC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -979,7 +974,7 @@ network_UCD_vs_HC_up <- build_ppi_network(
   condition = "UCD_vs_HC   = UCD - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -989,7 +984,7 @@ hubs_UCD_vs_HC_up <- identify_hub_genes(
   g = network_UCD_vs_HC_up$graph,
   condition = "UCD_vs_HC   = UCD - HC",
   regulation = "up",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -999,7 +994,7 @@ modules_UCD_vs_HC_up <- detect_ppi_modules(
   g = network_UCD_vs_HC_up$graph,
   condition = "UCD_vs_HC   = UCD - HC",
   regulation = "up", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -1012,7 +1007,7 @@ network_UCD_vs_HC_down <- build_ppi_network(
   condition = "UCD_vs_HC   = UCD - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1022,7 +1017,7 @@ hubs_UCD_vs_HC_down <- identify_hub_genes(
   g = network_UCD_vs_HC_down$graph,
   condition = "UCD_vs_HC   = UCD - HC",
   regulation = "down",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1032,7 +1027,7 @@ modules_UCD_vs_HC_down <- detect_ppi_modules(
   g = network_UCD_vs_HC_down$graph,
   condition = "UCD_vs_HC   = UCD - HC",
   regulation = "down", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1049,7 +1044,7 @@ network_AD_vs_HC_up <- build_ppi_network(
   condition = "AD_vs_HC    = AD  - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/AD_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -1059,7 +1054,7 @@ hubs_AD_vs_HC_up <- identify_hub_genes(
   g = network_AD_vs_HC_up$graph,
   condition = "AD_vs_HC    = AD  - HC",
   regulation = "up",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/AD_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -1069,7 +1064,7 @@ modules_AD_vs_HC_up <- detect_ppi_modules(
   g = network_AD_vs_HC_up$graph,
   condition = "AD_vs_HC    = AD  - HC",
   regulation = "up", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/AD_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -1082,7 +1077,7 @@ network_AD_vs_HC_down <- build_ppi_network(
   condition = "AD_vs_HC    = AD  - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/AD_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1092,7 +1087,7 @@ hubs_AD_vs_HC_down <- identify_hub_genes(
   g = network_AD_vs_HC_down$graph,
   condition = "AD_vs_HC    = AD  - HC",
   regulation = "down",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/AD_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1102,7 +1097,7 @@ modules_AD_vs_HC_down <- detect_ppi_modules(
   g = network_AD_vs_HC_down$graph,
   condition = "AD_vs_HC    = AD  - HC",
   regulation = "down", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/AD_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1117,7 +1112,7 @@ network_CRC_vs_HC_up <- build_ppi_network(
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/CRC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -1127,7 +1122,7 @@ hubs_CRC_vs_HC_up <- identify_hub_genes(
   g = network_CRC_vs_HC_up$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "up",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/CRC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -1137,7 +1132,7 @@ modules_CRC_vs_HC_up <- detect_ppi_modules(
   g = network_CRC_vs_HC_up$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "up", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/CRC_vs_HC/PPI/UP",
   return_plot = TRUE
 )
@@ -1150,7 +1145,7 @@ network_CRC_vs_HC_down <- build_ppi_network(
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/CRC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1160,7 +1155,7 @@ hubs_CRC_vs_HC_down <- identify_hub_genes(
   g = network_AD_vs_HC_down$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "down",  # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/CRC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1170,7 +1165,7 @@ modules_CRC_vs_HC_down <- detect_ppi_modules(
   g = network_AD_vs_HC_down$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "down", # Options: "up" , "down"
-  save = TRUE,
+  save = FALSE,
   out_dir = "results/CRC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
@@ -1185,19 +1180,6 @@ hub_genes <- list(
   CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol,hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
 )
 
-# hub genes venn diagram
-
-# Prepare your list
-venn_list <- list(
-  LSC = LSC,PC = PC,UCD = UCD,AD = AD,CRC = CRC
-)
-
-# Plot
-ggVennDiagram(venn_list, label_alpha = 0, label = "count") +
-  scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
-  theme_void() +
-  ggtitle("Hub Genes Across UC to CRC progression stages") +
-  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
 
 #---Heat Map Generation for DEG Expressions----
 
@@ -1247,7 +1229,7 @@ Heatmap(
   show_column_names = TRUE,
   show_row_names = TRUE,
   row_title_gp = gpar(fontsize = 10, fontface = "bold"),
-  column_split = annotation_col$disease,  # optional: facet columns by disease
+  column_split = annotation_col$condition,  # optional: facet columns by disease
   col = colorRamp2(c(-2, 0, 2), c("navy", "white", "firebrick")),
   heatmap_legend_param = list(title = "Expression"),
   row_names_gp = gpar(fontsize = 4.5),        # Gene names (rows)
@@ -1255,4 +1237,19 @@ Heatmap(
 )
 
 
+# Prepare your list
+venn_list <- list(
+  LSC = LSC,
+  PC = PC,
+  UCD = UCD,
+  AD = AD,
+  CRC = CRC
+)
+
+# Plot
+ggVennDiagram(venn_list, label_alpha = 0, label = "count") +
+  scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
+  theme_void() +
+  ggtitle("Hub Genes Across Immune-Mediated Diseases") +
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
 
