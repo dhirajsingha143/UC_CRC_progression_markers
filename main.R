@@ -1189,15 +1189,70 @@ hub_genes <- list(
 
 # Prepare your list
 venn_list <- list(
-  LSC,PC,UCD,AD,CRC
+  LSC = LSC,PC = PC,UCD = UCD,AD = AD,CRC = CRC
 )
 
 # Plot
 ggVennDiagram(venn_list, label_alpha = 0, label = "count") +
   scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
   theme_void() +
-  ggtitle("Hub Genes Across Immune-Mediated Diseases") +
+  ggtitle("Hub Genes Across UC to CRC progression stages") +
   theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+
+#---Heat Map Generation for DEG Expressions----
+
+top_genes <- unique(c(
+  LSC,
+  PC,
+  UCD,
+  AD,
+  CRC
+))
+
+heat_expr_mat <- integrated_expr_data[top_genes, ]
+
+# Reorder expression matrix
+heat_expr_mat <- heat_expr_mat[, integrated_meta_data$sample_id]
+
+# Reorder sample annotation
+annotation_col <- integrated_meta_data[integrated_meta_data$sample_id,]
+
+# Column annotations
+col_ha <- HeatmapAnnotation(
+  Disease = annotation_col$condition,
+  Batch = annotation_col$batch,
+  col = list(
+    Disease = c("HC"  = "gray",
+                "LSC" = "green",
+                "PC"  = "orange",
+                "qUC" = "yellow",
+                "UCD" = "red",
+                "AD"  = "blue",
+                "CRC" = "purple"
+    ),
+    Batch = c("1" = "salmon", "2" = "gold", "3" = "lightblue")
+  ),
+  annotation_height = unit(6, "mm")
+)
+
+# Row scaling (z-score)
+heat_z <- t(scale(t(as.matrix(heat_expr_mat))))
+
+Heatmap(
+  heat_z,
+  name = "Z-score",
+  top_annotation = col_ha,
+  cluster_rows = TRUE,
+  cluster_columns = TRUE,
+  show_column_names = TRUE,
+  show_row_names = TRUE,
+  row_title_gp = gpar(fontsize = 10, fontface = "bold"),
+  column_split = annotation_col$disease,  # optional: facet columns by disease
+  col = colorRamp2(c(-2, 0, 2), c("navy", "white", "firebrick")),
+  heatmap_legend_param = list(title = "Expression"),
+  row_names_gp = gpar(fontsize = 4.5),        # Gene names (rows)
+  column_names_gp = gpar(fontsize = 5)
+)
 
 
 
