@@ -17,6 +17,7 @@ BiocManager::install("org.Hs.eg.db")
 BiocManager::install("ReactomePA")
 BiocManager::install("ComplexHeatmap")
 BiocManager::install("colorRamp2")
+BiocManager::install("ggVennDiagram")
 
 # load packages
 library(GEOquery)
@@ -34,6 +35,7 @@ library(stringr)
 library(ReactomePA)
 library(ComplexHeatmap)
 library(colorRamp2)
+library(ggVennDiagram)
 
 
 # GEO data set load local downloaded files
@@ -1172,5 +1174,30 @@ modules_CRC_vs_HC_down <- detect_ppi_modules(
   out_dir = "results/CRC_vs_HC/PPI/DOWN",
   return_plot = TRUE
 )
+
+# Define hub gene list
+
+hub_genes <- list(
+  LSC <- unique(c(hubs_LSC_vs_HC_up$hub_df$Gene_Symbol,hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
+  PC <- unique(c(hubs_PC_vs_HC_up$hub_df$Gene_Symbol,hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
+  UCD <- unique(c(hubs_UCD_vs_HC_up$hub_df$Gene_Symbol,hubs_UCD_vs_HC_down$hub_df$Gene_Symbol)),
+  AD <- unique(c(hubs_AD_vs_HC_up$hub_df$Gene_Symbol,hubs_AD_vs_HC_down$hub_df$Gene_Symbol)),
+  CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol,hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
+)
+
+# hub genes venn diagram
+
+# Prepare your list
+venn_list <- list(
+  LSC,PC,UCD,AD,CRC
+)
+
+# Plot
+ggVennDiagram(venn_list, label_alpha = 0, label = "count") +
+  scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
+  theme_void() +
+  ggtitle("Hub Genes Across Immune-Mediated Diseases") +
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+
 
 
