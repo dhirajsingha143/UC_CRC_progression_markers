@@ -40,21 +40,24 @@ library(ggVennDiagram)
 
 # GEO data set load local downloaded files
 
-gset1 <- getGEO(filename = "GEO_Datasets/GSE47908_series_matrix.txt.gz", getGPL = FALSE) # RMA
-gset2 <- getGEO(filename = "GEO_Datasets/GSE20916_series_matrix.txt.gz", getGPL = FALSE) # RMA
-gset3 <- getGEO(filename = "GEO_Datasets/GSE37283_series_matrix.txt.gz", getGPL = FALSE) # RMA
+gset1 <- getGEO(filename = "GEO_Datasets/GSE47908_series_matrix.txt.gz", getGPL = FALSE)  # RMA
+gset2 <- getGEO(filename = "GEO_Datasets/GSE13367_series_matrix.txt.gz", getGPL = FALSE)  # RMA
+gset3 <- getGEO(filename = "GEO_Datasets/GSE36807_series_matrix.txt.gz", getGPL = FALSE)  # RMA
+gset4 <- getGEO(filename = "GEO_Datasets/GSE9452_series_matrix.txt.gz", getGPL = FALSE)   # RMA
 
 # meta data
 
 meta1 <- pData(gset1)
 meta2 <- pData(gset2)
 meta3 <- pData(gset3)
+meta4 <- pData(gset4)
 
 # expression data
 
 exp1 <- exprs(gset1)
 exp2 <- exprs(gset2)
 exp3 <- exprs(gset3)
+exp4 <- exprs(gset4)
 
 # cleaning meta data
 
@@ -64,42 +67,60 @@ meta1$title <- make.names(meta1$title)
 meta1_clean <- meta1 %>% 
   dplyr::select(1,32) %>% 
   dplyr::rename(condition = colnames(meta1)[32]) %>%
-  dplyr::mutate(condition = gsub("left.sided.coltis","LSC",condition)) %>% 
-  dplyr::mutate(condition = gsub("pancolitis","PC",condition)) %>% 
+  dplyr::mutate(condition = gsub("left.sided.coltis","UC",condition)) %>% 
+  dplyr::mutate(condition = gsub("pancolitis","UC",condition)) %>% 
   dplyr::mutate(condition = gsub("ulcerative.colitis.associated.dysplasia","UCD",condition)) %>% 
   dplyr::mutate(condition = gsub("control","HC",condition)) %>% 
   dplyr::mutate(title = gsub(".\\d+$","",title)) %>% 
   dplyr::mutate(batch = "1")
 
-group1 <- factor(meta1_clean$condition, levels = c("HC","LSC","PC","UCD"))
+group1 <- factor(meta1_clean$condition, levels = c("HC","UC","UCD"))
 
 #meta2
-meta2$`tissue:ch1` <- make.names(meta2$`tissue:ch1`)
+meta2$characteristics_ch1 <- make.names(meta2$characteristics_ch1)
 
-meta2_clean <- meta2 %>% 
-  dplyr::select(1,41) %>%
-  dplyr::filter(!grepl("normal.colon",`tissue:ch1`)) %>%
-  dplyr::filter(!grepl("colon.tumor",`tissue:ch1`)) %>%
-  dplyr::rename(condition = `tissue:ch1`) %>% 
-  dplyr::mutate(condition = gsub("adenoma","AD",condition)) %>% 
-  dplyr::mutate(condition = gsub("adenocarcinoma","CRC",condition)) %>% 
-  dplyr::mutate(title = gsub("_\\d+$","",title)) %>% 
+meta2_clean <- meta2 |> 
+  dplyr::select(1,,8,10) |> 
+  dplyr::rename(condition = colnames(meta2)[10]) |> 
+  dplyr::filter(!grepl("Colonocytes from human colonic mucosa", source_name_ch1)) |> 
+  dplyr::filter(!grepl("Collagen.colitis..excluded.", condition)) |> 
+  dplyr::mutate(condition = gsub("UC.inflamed","UC",condition)) |> 
+  dplyr::mutate(condition = gsub("UC.non.inflamed","qUC",condition)) |> 
+  dplyr::mutate(condition = gsub("Control","HC",condition)) |>
   dplyr::mutate(batch = "2")
 
-group2 <- factor(meta2_clean$condition, levels = c("AD","CRC"))
+meta2_clean <- meta2_clean[,-2]
+
+group2 <- factor(meta2_clean$condition, levels = c("HC","UC","qUC"))
 
 #meta3
-meta3$source_name_ch1 <- make.names(meta3$source_name_ch1)
+meta3$`diagnosis:ch1` <- make.names(meta3$`diagnosis:ch1`)
 
-meta3_clean <- meta3 %>% 
-  dplyr::select(1,8) %>% 
-  dplyr::rename(condition = source_name_ch1) %>%
-  dplyr::mutate(condition = gsub("quiescent.ulcerative.colitis","qUC",condition)) %>%
-  dplyr::mutate(condition = gsub("normal.control","HC",condition)) %>%
-  dplyr::mutate(condition = gsub("ulcerative.colitis.with.neoplasia","UCD",condition)) %>%
+meta3_clean <- meta3 |> 
+  dplyr::select(1,32) |> 
+  dplyr::rename(condition = colnames(meta3)[32]) |> 
+  dplyr::filter(!grepl("Crohn.s.Disease", condition)) |> 
+  dplyr::mutate(condition = gsub("Healthy.control","HC",condition)) |> 
+  dplyr::mutate(condition = gsub("Ulcerative.colitis","UC",condition)) |> 
   dplyr::mutate(batch = "3")
 
-group3 <- factor(meta3_clean$condition, levels = c("HC","qUC","UCD"))
+group3 <- factor(meta3_clean$condition, levels = c("HC","UC"))
+
+#meta4
+meta4$characteristics_ch1 <- make.names(meta4$characteristics_ch1)
+
+meta4_clean <- meta4 |> 
+  dplyr::select(1,10) |> 
+  dplyr::rename(condition = colnames(meta4)[10]) |> 
+  dplyr::mutate(condition = gsub("Ulcerative.colitis.patient..biopsy.taken.from.the.descending.colon..macroscopic.inflammation.vissible","UC",condition)) |> 
+  dplyr::mutate(condition = gsub("Ulcerative.colitis.patient..biopsy.taken.from.the.descending.colon..no.macroscopic.signs.of.inflammation.","UC",condition)) |> 
+  dplyr::mutate(condition = gsub("Control.subject..biopsy.taken.from.the.colon..no.macroscopic.signs.of.inflammation.","HC",condition)) |> 
+  dplyr::mutate(condition = gsub("Control.subject..biopsy.taken.from.the.sigmoideum..no.macroscopic.signs.of.inflammation.","HC",condition)) |> 
+  dplyr::mutate(condition = gsub("Ulcerative.colitis.patient..biopsy.taken.from.the.colon..no.macroscopic.signs.of.inflammation.","qUC",condition)) |> 
+  dplyr::mutate(condition = gsub("Ulcerative.colitis.patient..biopsy.taken.from.the.sigmoideum..no.macroscopic.signs.of.inflammation.","qUC",condition)) |> 
+  dplyr::mutate(batch = "4")
+
+group4 <- factor(meta4_clean$condition, levels = c("HC","UC","qUC"))
 
 # exp samples kept based on the metadata selection of samples
 
@@ -111,6 +132,9 @@ exp2 <- exp2[,rownames(meta2_clean)]
 
 meta3_clean <- meta3_clean[order(group3),]
 exp3 <- exp3[,rownames(meta3_clean)]
+
+meta4_clean <- meta4_clean[order(group4),]
+exp4 <- exp4[,rownames(meta4_clean)]
 
 
 #boxplot(exp1,outline=FALSE,las=2,main="GSE47908")
@@ -152,13 +176,25 @@ colnames(annot_expr2) <- c("probe_id","gene_symbol")
 probe_ids3 <- rownames(exp3) #[HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
 
 annot_expr3 <- getBM(
-  attribute = c("affy_ht_hg_u133_plus_pm", "external_gene_name"),
-  filters = "affy_ht_hg_u133_plus_pm",
+  attribute = c("affy_hg_u133_plus_2", "external_gene_name"),
+  filters = "affy_hg_u133_plus_2",
   values = probe_ids3,
   mart = ensembl
 )
 
 colnames(annot_expr3) <- c("probe_id","gene_symbol")
+
+#Annotate expr4 data
+probe_ids4 <- rownames(exp4) #[HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
+
+annot_expr4 <- getBM(
+  attribute = c("affy_hg_u133_plus_2", "external_gene_name"),
+  filters = "affy_hg_u133_plus_2",
+  values = probe_ids3,
+  mart = ensembl
+)
+
+colnames(annot_expr4) <- c("probe_id","gene_symbol")
 
 # Merge annotation with expression data
 #expr1
@@ -169,7 +205,7 @@ expr1_annotated <- inner_join(annot_expr1,expr1, by = "probe_id") |>
   filter(gene_symbol != "") |>
   group_by(gene_symbol) |>
   summarise(across(where(is.numeric),mean)) |>
-  column_to_rownames(var = "gene_symbol")
+  tibble::column_to_rownames(var = "gene_symbol")
 
 #expr2
 expr2 <- as.data.frame(exp2)
@@ -180,7 +216,7 @@ expr2_annotated <- inner_join(annot_expr2,expr2,by = "probe_id") |>
   group_by(gene_symbol) |>
   summarize(across(where(is.numeric),mean)) |>
   filter(!if_any(where(is.numeric), is.na)) |>
-  column_to_rownames(var = "gene_symbol")
+  tibble::column_to_rownames(var = "gene_symbol")
 
 #expr3
 expr3 <- as.data.frame(exp3)
@@ -191,28 +227,42 @@ expr3_annotated <- inner_join(annot_expr3,expr3,by = "probe_id") |>
   group_by(gene_symbol) |>
   summarize(across(where(is.numeric),mean)) |>
   filter(!if_any(where(is.numeric), is.na)) |>
-  column_to_rownames(var = "gene_symbol")
+  tibble::column_to_rownames(var = "gene_symbol")
+
+#expr4
+expr4 <- as.data.frame(exp4)
+expr4$probe_id <- rownames(expr4)
+
+expr4_annotated <- inner_join(annot_expr4,expr4,by = "probe_id") |>
+  filter(gene_symbol != "") |>
+  group_by(gene_symbol) |>
+  summarize(across(where(is.numeric),mean)) |>
+  filter(!if_any(where(is.numeric), is.na)) |>
+  tibble::column_to_rownames(var = "gene_symbol")
 
 #Merge by common gene and prepare final integration expr data
 
 ## Find common genes
 
-com_platform <- intersect(rownames(expr1_annotated),rownames(expr3_annotated))
+com_platform <- intersect(rownames(expr1_annotated),rownames(expr2_annotated))
 
-common_genes <- intersect(com_platform,rownames(expr2_annotated))
+common_genes <- intersect(com_platform,rownames(expr3_annotated))
+
+common_genes <- intersect(common_genes,rownames(expr4_annotated))
 
 ## Subset both data sets to include only common genes
 integrated_expr_data <- cbind(
   expr1_annotated[common_genes, ],
   expr2_annotated[common_genes, ],
-  expr3_annotated[common_genes, ]
+  expr3_annotated[common_genes, ],
+  expr4_annotated[common_genes, ]
 )
 
 
 ## integrated meta data
-integrated_meta_data <- rbind(meta1_clean, meta2_clean, meta3_clean)
+integrated_meta_data <- rbind(meta1_clean, meta2_clean, meta3_clean, meta4_clean)
 
-group_meta_data <- factor(integrated_meta_data$condition, levels = c("HC", "LSC", "PC", "qUC", "UCD", "AD", "CRC"))
+group_meta_data <- factor(integrated_meta_data$condition, levels = c("HC", "UC", "UCD", "qUC"))
 
 integrated_meta_data <- integrated_meta_data[order(group_meta_data),]
 integrated_expr_data <- integrated_expr_data[,rownames(integrated_meta_data)]
@@ -271,7 +321,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "LSC", "PC", "qUC", "UCD", "AD", "CRC")
+  levels = c("HC", "UC", "UCD", "qUC")
 )
 
 
@@ -283,12 +333,9 @@ raw_exp_boxplot <- ggplot(final_melted_data,
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "LSC" = "green",
-      "PC"  = "orange",
-      "qUC" = "yellow",
-      "UCD" = "red",
-      "AD"  = "blue",
-      "CRC" = "purple"
+      "UC" = "green",
+      "UCD"  = "orange",
+      "qUC" = "yellow"
     )
   ) +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5, size = 6)) +
@@ -302,12 +349,9 @@ raw_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = con
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "LSC" = "green",
-      "PC"  = "orange",
-      "qUC" = "yellow",
-      "UCD" = "red",
-      "AD"  = "blue",
-      "CRC" = "purple"
+      "UC" = "green",
+      "UCD"  = "orange",
+      "qUC" = "yellow"
     )
   )
 
@@ -316,7 +360,7 @@ raw_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = con
 pca <- prcomp(t(integrated_expr_data), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC", "PC", "qUC", "UCD", "AD", "CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "UC", "UCD", "qUC"))
 pca_df$batch <- integrated_meta_data$batch
 
 raw_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
@@ -359,7 +403,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "LSC", "PC", "qUC", "UCD", "AD", "CRC")
+  levels = c("HC", "UC", "UCD", "qUC")
 )
 
 # Create the box plot
@@ -370,12 +414,9 @@ normalized_exp_boxplot <- ggplot(final_melted_data,
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "LSC" = "green",
-      "PC"  = "orange",
-      "qUC" = "yellow",
-      "UCD" = "red",
-      "AD"  = "blue",
-      "CRC" = "purple"
+      "UC" = "green",
+      "UCD"  = "orange",
+      "qUC" = "yellow"
     )
   ) +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5, size = 6)) +
@@ -389,12 +430,9 @@ normalized_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fil
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "LSC" = "green",
-      "PC"  = "orange",
-      "qUC" = "yellow",
-      "UCD" = "red",
-      "AD"  = "blue",
-      "CRC" = "purple"
+      "UC" = "green",
+      "UCD"  = "orange",
+      "qUC" = "yellow"
     )
   )
 
@@ -402,7 +440,7 @@ normalized_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fil
 pca <- prcomp(t(normalized_expr_data), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC", "PC", "qUC", "UCD", "AD", "CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "UC", "UCD", "qUC"))
 pca_df$batch <- integrated_meta_data$batch
 
 normalized_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
@@ -415,7 +453,12 @@ normalized_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, s
 
 #---Processing: Batch correction for integrated expr data------------------------------------------------------------
 
-batch_corrected_expr <- limma::removeBatchEffect(normalized_expr_data, batch = integrated_meta_data$batch)
+design <- model.matrix(~0 + condition, data = integrated_meta_data)
+
+colnames(design) <- levels(factor(integrated_meta_data$condition))
+
+batch_corrected_expr <- limma::removeBatchEffect(normalized_expr_data, batch = integrated_meta_data$batch, design = design)
+
 
 #---Visualization after batch effect correction----
 
@@ -443,7 +486,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "LSC", "PC", "qUC", "UCD", "AD", "CRC")
+  levels = c("HC", "UC", "UCD", "qUC")
 )
 
 # Create the box plot
@@ -454,12 +497,9 @@ batch_corrected_exp_boxplot <- ggplot(final_melted_data,
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "LSC" = "green",
-      "PC"  = "orange",
-      "qUC" = "yellow",
-      "UCD" = "red",
-      "AD"  = "blue",
-      "CRC" = "purple"
+      "UC" = "green",
+      "UCD"  = "orange",
+      "qUC" = "yellow"
     )
   ) +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5, size = 6)) +
@@ -473,12 +513,9 @@ batch_corrected_exp_density_plot <- ggplot(final_melted_data, aes(x = expression
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "LSC" = "green",
-      "PC"  = "orange",
-      "qUC" = "yellow",
-      "UCD" = "red",
-      "AD"  = "blue",
-      "CRC" = "purple"
+      "UC" = "green",
+      "UCD"  = "orange",
+      "qUC" = "yellow"
     )
   )
 
@@ -487,7 +524,7 @@ batch_corrected_exp_density_plot <- ggplot(final_melted_data, aes(x = expression
 pca <- prcomp(t(batch_corrected_expr), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC", "PC", "qUC", "UCD", "AD", "CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "UC", "UCD", "qUC"))
 pca_df$batch <- integrated_meta_data$batch
 
 
@@ -515,11 +552,9 @@ custom_contrasts <- c(        # Step-wise Comparison for (local shift at each st
 )
 
 custom_contrasts <- c(
-  "LSC_vs_HC   = LSC - HC",   # Cumulative Contrast (exp deviation from HC as disease accumulates) 
-  "PC_vs_HC    = PC  - HC",   # helps identify early vs late markers
-  "UCD_vs_HC   = UCD - HC",
-  "AD_vs_HC    = AD  - HC",
-  "CRC_vs_HC   = CRC - HC"
+  "UC_vs_HC   = UC - HC",   # Cumulative Contrast (exp deviation from HC as disease accumulates) 
+  "UCD_vs_HC    = UCD  - HC",   # helps identify early vs late markers
+  "qUC_vs_HC   = qUC - HC"
 )
 
 
