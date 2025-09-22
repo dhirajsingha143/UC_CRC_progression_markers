@@ -86,6 +86,75 @@
       "Repository": "Bioconductor 3.21",
       "NeedsCompilation": "no"
     },
+    "AnnotationHub": {
+      "Package": "AnnotationHub",
+      "Version": "3.16.1",
+      "Source": "Bioconductor",
+      "Type": "Package",
+      "Title": "Client to access AnnotationHub resources",
+      "Authors@R": "c(person(\"Bioconductor Package\", \"Maintainer\", email=\"maintainer@bioconductor.org\", role=\"cre\"), person(\"Martin\", \"Morgan\", role=\"aut\"), person(\"Marc\", \"Carlson\", role=\"ctb\"), person(\"Dan\", \"Tenenbaum\", role=\"ctb\"), person(\"Sonali\", \"Arora\", role=\"ctb\"), person(\"Valerie\", \"Oberchain\", role=\"ctb\"), person(\"Kayla\", \"Morrell\", role=\"ctb\"), person(\"Lori\", \"Shepherd\", role=\"aut\"))",
+      "biocViews": "Infrastructure, DataImport, GUI, ThirdPartyClient",
+      "Description": "This package provides a client for the Bioconductor AnnotationHub web resource. The AnnotationHub web resource provides a central location where genomic files (e.g., VCF, bed, wig) and other resources from standard locations (e.g., UCSC, Ensembl) can be discovered. The resource includes metadata about each resource, e.g., a textual description, tags, and date of modification. The client creates and manages a local cache of files retrieved by the user, helping with quick and reproducible access.",
+      "License": "Artistic-2.0",
+      "Depends": [
+        "BiocGenerics (>= 0.15.10)",
+        "BiocFileCache (>= 1.5.1)"
+      ],
+      "Imports": [
+        "utils",
+        "methods",
+        "grDevices",
+        "RSQLite",
+        "BiocManager",
+        "BiocVersion",
+        "curl",
+        "rappdirs",
+        "AnnotationDbi (>= 1.31.19)",
+        "S4Vectors",
+        "httr",
+        "yaml",
+        "dplyr"
+      ],
+      "Suggests": [
+        "IRanges",
+        "GenomicRanges",
+        "GenomeInfoDb",
+        "VariantAnnotation",
+        "Rsamtools",
+        "rtracklayer",
+        "BiocStyle",
+        "knitr",
+        "AnnotationForge",
+        "rBiopaxParser",
+        "RUnit",
+        "txdbmaker",
+        "MSnbase",
+        "mzR",
+        "Biostrings",
+        "CompoundDb",
+        "keras",
+        "ensembldb",
+        "SummarizedExperiment",
+        "ExperimentHub",
+        "gdsfmt",
+        "rmarkdown",
+        "HubPub"
+      ],
+      "Enhances": [
+        "AnnotationHubData"
+      ],
+      "Collate": "AnnotationHubOption.R AllGenerics.R Hub-class.R db-utils.R AnnotationHub-class.R AnnotationHubResource-class.R BEDResource-class.R ProteomicsResource-class.R EpigenomeResource-class.R EnsDbResource-class.R utilities.R sql-utils.R Hub-utils.R cache-utils.R zzz.R",
+      "VignetteBuilder": "knitr",
+      "BugReports": "https://github.com/Bioconductor/AnnotationHub/issues",
+      "NeedsCompilation": "yes",
+      "git_url": "https://git.bioconductor.org/packages/AnnotationHub",
+      "git_branch": "RELEASE_3_21",
+      "git_last_commit": "cda9c0e",
+      "git_last_commit_date": "2025-07-17",
+      "Repository": "Bioconductor 3.21",
+      "Author": "Bioconductor Package Maintainer [cre], Martin Morgan [aut], Marc Carlson [ctb], Dan Tenenbaum [ctb], Sonali Arora [ctb], Valerie Oberchain [ctb], Kayla Morrell [ctb], Lori Shepherd [aut]",
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+    },
     "BH": {
       "Package": "BH",
       "Version": "1.87.0-1",
@@ -647,6 +716,51 @@
       "Repository": "Bioconductor 3.21",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre], Aaron Lun [ctb], Peter Hickey [ctb]"
+    },
+    "ExperimentHub": {
+      "Package": "ExperimentHub",
+      "Version": "2.16.1",
+      "Source": "Bioconductor",
+      "Type": "Package",
+      "Title": "Client to access ExperimentHub resources",
+      "Authors@R": "c(person(\"Bioconductor Package\", \"Maintainer\", email=\"maintainer@bioconductor.org\", role=\"cre\"), person(\"Martin\", \"Morgan\", role=\"aut\"), person(\"Marc\", \"Carlson\", role=\"ctb\"), person(\"Dan\", \"Tenenbaum\", role=\"ctb\"), person(\"Sonali\", \"Arora\", role=\"ctb\"), person(\"Valerie\", \"Oberchain\", role=\"ctb\"), person(\"Kayla\", \"Morrell\", role=\"ctb\"), person(\"Lori\", \"Shepherd\", role=\"aut\"))",
+      "Description": "This package provides a client for the Bioconductor ExperimentHub web resource. ExperimentHub provides a central location where curated data from experiments, publications or training courses can be accessed. Each resource has associated metadata, tags and date of modification. The client creates and manages a local cache of files retrieved enabling quick and reproducible access.",
+      "License": "Artistic-2.0",
+      "biocViews": "Infrastructure, DataImport, GUI, ThirdPartyClient",
+      "Depends": [
+        "methods",
+        "BiocGenerics (>= 0.15.10)",
+        "AnnotationHub (>= 3.3.6)",
+        "BiocFileCache (>= 1.5.1)"
+      ],
+      "Imports": [
+        "utils",
+        "S4Vectors",
+        "BiocManager",
+        "rappdirs"
+      ],
+      "Suggests": [
+        "knitr",
+        "BiocStyle",
+        "rmarkdown",
+        "HubPub",
+        "GenomicAlignments"
+      ],
+      "Enhances": [
+        "ExperimentHubData"
+      ],
+      "URL": "https://github.com/Bioconductor/ExperimentHub",
+      "BugReports": "https://github.com/Bioconductor/ExperimentHub/issues",
+      "VignetteBuilder": "knitr",
+      "RoxygenNote": "7.0.0",
+      "git_url": "https://git.bioconductor.org/packages/ExperimentHub",
+      "git_branch": "RELEASE_3_21",
+      "git_last_commit": "f7c72cc",
+      "git_last_commit_date": "2025-07-17",
+      "Repository": "Bioconductor 3.21",
+      "NeedsCompilation": "no",
+      "Author": "Bioconductor Package Maintainer [cre], Martin Morgan [aut], Marc Carlson [ctb], Dan Tenenbaum [ctb], Sonali Arora [ctb], Valerie Oberchain [ctb], Kayla Morrell [ctb], Lori Shepherd [aut]",
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
     },
     "GEOquery": {
       "Package": "GEOquery",
@@ -3546,6 +3660,53 @@
       "Author": "Chun-Hui Gao [aut, cre] (ORCID: <https://orcid.org/0000-0002-1445-7939>), Guangchuang Yu [ctb] (ORCID: <https://orcid.org/0000-0002-6485-8781>), Adrian Dusa [aut, cph] (ORCID: <https://orcid.org/0000-0002-3525-9253>, note: Adrian Dusa is the author and copyright holder of venn, where ggVennDiagram imports the polygon coordinates enabling 5 - 7 sets Venn diagram.), Turgut Yigit Akyol [ctb] (ORCID: <https://orcid.org/0000-0003-0897-7716>)",
       "Repository": "CRAN"
     },
+    "ggalluvial": {
+      "Package": "ggalluvial",
+      "Version": "0.12.5",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Alluvial Plots in 'ggplot2'",
+      "Authors@R": "c( person(given = \"Jason Cory\", family = \"Brunson\", role = c(\"aut\", \"cre\"), email = \"cornelioid@gmail.com\"), person(given = \"Quentin D.\", family = \"Read\", role = 'aut'))",
+      "Maintainer": "Jason Cory Brunson <cornelioid@gmail.com>",
+      "Description": "Alluvial plots use variable-width ribbons and stacked bar plots to represent multi-dimensional or repeated-measures data with categorical or ordinal variables; see Riehmann, Hanfler, and Froehlich (2005) <doi:10.1109/INFVIS.2005.1532152> and Rosvall and Bergstrom (2010) <doi:10.1371/journal.pone.0008694>. Alluvial plots are statistical graphics in the sense of Wilkinson (2006) <doi:10.1007/0-387-28695-0>; they share elements with Sankey diagrams and parallel sets plots but are uniquely determined from the data and a small set of parameters. This package extends Wickham's (2010) <doi:10.1198/jcgs.2009.07098> layered grammar of graphics to generate alluvial plots from tidy data.",
+      "Depends": [
+        "R (>= 3.6)",
+        "ggplot2 (>= 2.2)"
+      ],
+      "Imports": [
+        "stats",
+        "dplyr (>= 0.7)",
+        "tidyr (>= 0.7)",
+        "lazyeval",
+        "rlang",
+        "tidyselect"
+      ],
+      "Suggests": [
+        "grid",
+        "alluvial",
+        "testthat",
+        "knitr",
+        "rmarkdown",
+        "babynames",
+        "sessioninfo",
+        "ggrepel",
+        "shiny (>= 1.4.0.2)",
+        "htmltools",
+        "sp (>= 1.4-0)",
+        "ggfittext (>= 0.6)",
+        "vdiffr (>= 0.2)"
+      ],
+      "License": "GPL-3",
+      "LazyData": "true",
+      "URL": "http://corybrunson.github.io/ggalluvial/",
+      "BugReports": "https://github.com/corybrunson/ggalluvial/issues",
+      "VignetteBuilder": "knitr",
+      "RoxygenNote": "7.2.3",
+      "Encoding": "UTF-8",
+      "NeedsCompilation": "no",
+      "Author": "Jason Cory Brunson [aut, cre], Quentin D. Read [aut]",
+      "Repository": "CRAN"
+    },
     "ggforce": {
       "Package": "ggforce",
       "Version": "0.5.0",
@@ -3738,7 +3899,7 @@
     },
     "ggplotify": {
       "Package": "ggplotify",
-      "Version": "0.1.2",
+      "Version": "0.1.3",
       "Source": "Repository",
       "Title": "Convert Plot to 'grob' or 'ggplot' Object",
       "Authors@R": "c(person(\"Guangchuang\", \"Yu\", email = \"guangchuangyu@gmail.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-6485-8781\")))",
@@ -3752,6 +3913,7 @@
         "grDevices",
         "grid",
         "gridGraphics",
+        "rlang",
         "yulab.utils"
       ],
       "Suggests": [
@@ -3772,9 +3934,9 @@
       "URL": "https://github.com/GuangchuangYu/ggplotify",
       "BugReports": "https://github.com/GuangchuangYu/ggplotify/issues",
       "Encoding": "UTF-8",
-      "RoxygenNote": "7.2.3",
+      "RoxygenNote": "7.3.3",
       "NeedsCompilation": "no",
-      "Author": "Guangchuang Yu [aut, cre] (<https://orcid.org/0000-0002-6485-8781>)",
+      "Author": "Guangchuang Yu [aut, cre] (ORCID: <https://orcid.org/0000-0002-6485-8781>)",
       "Maintainer": "Guangchuang Yu <guangchuangyu@gmail.com>",
       "Repository": "CRAN"
     },
@@ -3985,6 +4147,39 @@
       "Repository": "Bioconductor 3.21",
       "NeedsCompilation": "no",
       "Author": "Guangchuang Yu [aut, cre, cph] (ORCID: <https://orcid.org/0000-0002-6485-8781>), Tommy Tsan-Yuk Lam [aut, ths], Shuangbin Xu [aut] (ORCID: <https://orcid.org/0000-0003-3513-5362>), Lin Li [ctb], Bradley Jones [ctb], Justin Silverman [ctb], Watal M. Iwasaki [ctb], Yonghe Xia [ctb], Ruizhu Huang [ctb]"
+    },
+    "ggupset": {
+      "Package": "ggupset",
+      "Version": "0.4.1",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Combination Matrix Axis for 'ggplot2' to Create 'UpSet' Plots",
+      "URL": "https://github.com/const-ae/ggupset",
+      "BugReports": "https://github.com/const-ae/ggupset/issues",
+      "Authors@R": "person(\"Constantin\", \"Ahlmann-Eltze\", email = \"artjom31415@googlemail.com\",  role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-3762-068X\"))",
+      "Description": "Replace the standard x-axis in 'ggplots' with a combination matrix to visualize complex set overlaps. 'UpSet' has introduced a new way to visualize the overlap of sets as an alternative to Venn diagrams.  This package provides a simple way to produce such plots using 'ggplot2'.  In addition it can convert any categorical axis into a combination matrix axis.",
+      "License": "GPL-3",
+      "Encoding": "UTF-8",
+      "LazyData": "true",
+      "RoxygenNote": "7.3.1",
+      "Depends": [
+        "R (>= 2.10)"
+      ],
+      "Suggests": [
+        "testthat"
+      ],
+      "Imports": [
+        "ggplot2 (>= 3.3.0)",
+        "gtable",
+        "grid",
+        "tibble",
+        "rlang",
+        "scales"
+      ],
+      "NeedsCompilation": "no",
+      "Author": "Constantin Ahlmann-Eltze [aut, cre] (<https://orcid.org/0000-0002-3762-068X>)",
+      "Maintainer": "Constantin Ahlmann-Eltze <artjom31415@googlemail.com>",
+      "Repository": "CRAN"
     },
     "glue": {
       "Package": "glue",
@@ -4435,6 +4630,46 @@
       "Author": "Kirill Müller [aut, cre] (<https://orcid.org/0000-0002-1416-3412>), R Consortium [fnd], RStudio [fnd]",
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "CRAN"
+    },
+    "hpar": {
+      "Package": "hpar",
+      "Version": "1.50.0",
+      "Source": "Bioconductor",
+      "Type": "Package",
+      "Title": "Human Protein Atlas in R",
+      "Authors@R": "c(person(given = \"Laurent\", family = \"Gatto\", email = \"laurent.gatto@uclouvain.be\", comment = c(ORCID = \"0000-0002-1520-2268\"), role = c(\"cre\",\"aut\")), person(given = \"Manon\", family = \"Martin\", email = \"manon.martin@uclouvain.be\", role = \"aut\"))",
+      "Description": "The hpar package provides a simple R interface to and data from the Human Protein Atlas project.",
+      "Depends": [
+        "R (>= 3.5.0)"
+      ],
+      "Imports": [
+        "utils",
+        "ExperimentHub"
+      ],
+      "Suggests": [
+        "org.Hs.eg.db",
+        "GO.db",
+        "AnnotationDbi",
+        "knitr",
+        "BiocStyle",
+        "testthat",
+        "rmarkdown",
+        "dplyr",
+        "DT"
+      ],
+      "VignetteBuilder": "knitr",
+      "License": "Artistic-2.0",
+      "Collate": "hpa.R hpar-package.R zzz.R",
+      "biocViews": "Proteomics, CellBiology, DataImport, FunctionalGenomics, SystemsBiology, ExperimentHubSoftware",
+      "RoxygenNote": "7.2.2",
+      "git_url": "https://git.bioconductor.org/packages/hpar",
+      "git_branch": "RELEASE_3_21",
+      "git_last_commit": "9173bc2",
+      "git_last_commit_date": "2025-04-15",
+      "Repository": "Bioconductor 3.21",
+      "NeedsCompilation": "no",
+      "Author": "Laurent Gatto [cre, aut] (ORCID: <https://orcid.org/0000-0002-1520-2268>), Manon Martin [aut]",
+      "Maintainer": "Laurent Gatto <laurent.gatto@uclouvain.be>"
     },
     "httr": {
       "Package": "httr",
@@ -5130,6 +5365,36 @@
       "Config/Needs/website": "gifski",
       "NeedsCompilation": "no",
       "Author": "Thomas Lin Pedersen [cre, aut] (ORCID: <https://orcid.org/0000-0002-5147-4711>)",
+      "Repository": "CRAN"
+    },
+    "pheatmap": {
+      "Package": "pheatmap",
+      "Version": "1.0.13",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Pretty Heatmaps",
+      "Date": "2025-06-05",
+      "Authors@R": "person(given = \"Raivo\", family = \"Kolde\", role = c(\"aut\", \"cre\"), email = \"rkolde@gmail.com\")",
+      "Depends": [
+        "R (>= 2.0)"
+      ],
+      "Description": "Implementation of heatmaps that offers more control over dimensions and appearance.",
+      "Imports": [
+        "grid",
+        "RColorBrewer",
+        "scales",
+        "gtable",
+        "stats",
+        "grDevices",
+        "graphics"
+      ],
+      "License": "GPL-2",
+      "Encoding": "UTF-8",
+      "LazyLoad": "yes",
+      "RoxygenNote": "7.3.2",
+      "NeedsCompilation": "no",
+      "Author": "Raivo Kolde [aut, cre]",
+      "Maintainer": "Raivo Kolde <rkolde@gmail.com>",
       "Repository": "CRAN"
     },
     "pillar": {
@@ -6895,6 +7160,25 @@
       "NeedsCompilation": "yes",
       "Author": "Hadley Wickham [aut], Jim Hester [aut], Jeroen Ooms [aut, cre], Posit Software, PBC [cph, fnd], R Foundation [ctb] (Copy of R-project homepage cached as example)",
       "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
+      "Repository": "CRAN"
+    },
+    "yaml": {
+      "Package": "yaml",
+      "Version": "2.3.10",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Methods to Convert R Data to YAML and Back",
+      "Date": "2024-07-22",
+      "Suggests": [
+        "RUnit"
+      ],
+      "Author": "Shawn P Garbett [aut], Jeremy Stephens [aut, cre], Kirill Simonov [aut], Yihui Xie [ctb], Zhuoer Dong [ctb], Hadley Wickham [ctb], Jeffrey Horner [ctb], reikoch [ctb], Will Beasley [ctb], Brendan O'Connor [ctb], Gregory R. Warnes [ctb], Michael Quinn [ctb], Zhian N. Kamvar [ctb], Charlie Gao [ctb]",
+      "Maintainer": "Shawn Garbett <shawn.garbett@vumc.org>",
+      "License": "BSD_3_clause + file LICENSE",
+      "Description": "Implements the 'libyaml' 'YAML' 1.1 parser and emitter (<https://pyyaml.org/wiki/LibYAML>) for R.",
+      "URL": "https://github.com/vubiostat/r-yaml/",
+      "BugReports": "https://github.com/vubiostat/r-yaml/issues",
+      "NeedsCompilation": "yes",
       "Repository": "CRAN"
     },
     "yulab.utils": {
