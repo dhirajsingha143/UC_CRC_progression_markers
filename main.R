@@ -1097,7 +1097,7 @@ UC_CRC <- intersect(UC, CRC) # early to CRC common significantly hub markers
 # [1] "IL1B"   "CXCL8"  "CXCL1"  "LCN2"   "CXCL5"  "CXCL9"  "CXCL11" "MMP1" 
 #> PC_CRC
 # [1] "IL1B"   "CXCL8"  "LCN2"   "CXCL1"  "CXCL5"  "MMP3"   "MMP1"   "CXCL11"
------ 
+----------------------------------------------------------------------------
 # > UC_CRC
 # [1] "IL1B"   "CXCL8"  "CXCL1"  "LCN2"   "CXCL5"  "CXCL11" "MMP1" 
 
@@ -1310,7 +1310,7 @@ ggplot(normal_rna_tissue, aes(x = reorder(Gene.name, TPM), y = TPM)) +
        x = "Genes", y = "TPM")
 
 #comparison
---------------------
+--------------------------------------------------------------------------------
 # Prepare cancer data (assuming hub_in_crc already exists)
   cancer_plot <- hub_in_crc %>%
   mutate(Source = "Cancer") %>%
@@ -1336,5 +1336,18 @@ ggplot(combined_plot, aes(x = Gene.name, fill = Level, weight = Count.patients))
   labs(title = "Hub Genes Expression: Cancer vs Normal (HPA v16.1)",
        y = "Proportion", x = "Genes") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# Construct the full path to the lock directory
+lock_dir <- "G:/My Drive/AUUP/L319/Dhiraj/R_Projects_sync/UC_CRC_progression_markers/renv/library/windows/R-4.5/x86_64-w64-mingw32/00LOCK"
+
+# Check if the directory exists before trying to delete it
+if (dir.exists(lock_dir)) {
+  # Use unlink() to remove the directory and its contents
+  unlink(lock_dir, recursive = TRUE)
+  print("Lock directory removed. You can now try to install the package again.")
+} else {
+  print("No lock directory found.")
+}
 
 
