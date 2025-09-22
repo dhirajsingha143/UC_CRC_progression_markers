@@ -31,11 +31,14 @@ library(ggforce)
 library(ggrepel)
 library(clusterProfiler)
 library(org.Hs.eg.db)
+library(enrichplot)
+library(ggupset)       # check for installation
 library(stringr)
 library(ReactomePA)
 library(ComplexHeatmap)
 library(colorRamp2)
 library(ggVennDiagram)
+
 
 
 # GEO data set load local downloaded files
@@ -96,7 +99,7 @@ exp2 <- exp2[,rownames(meta2_clean)]
 ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 attributes <- listAttributes(ensembl)
 
-grep("affy|U133_Plus_PM", attributes$name, value = TRUE)
+grep("affy|U133_Plus_2", attributes$name, value = TRUE)
 
 #Annotate expr1 data
 probe_ids1 <- rownames(exp1) #[HG-U133_Plus_2] Affymetrix Human Genome U133 Plus 2.0 Array
@@ -472,13 +475,13 @@ deg_out <- run_deg_analysis(
 # for up reg
 genes_up_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$up$Gene
 genes_up_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$up$Gene
-genes_up_UCD <- deg_out$`UCD_vs_HC   = UCD - HC`$up$Gene
+genes_up_UCD <- deg_out$`UCD_vs_HC    = UCD  - HC`$up$Gene
 genes_up_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$up$Gene
 
 # for down reg
 genes_down_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$down$Gene
 genes_down_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$down$Gene
-genes_down_UCD <- deg_out$`UCD_vs_HC   = UCD - HC`$down$Gene
+genes_down_UCD <- deg_out$`UCD_vs_HC    = UCD  - HC`$down$Gene
 genes_down_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$down$Gene
 
 --------------------------------------------------------------------------------
@@ -516,13 +519,13 @@ annot_down_CRC <- get_entrez(genes_down_CRC)
 # UP DEG table entreze id annotated
 annot_up_LSC <- inner_join(annot_up_LSC, deg_out$`LSC_vs_HC   = LSC - HC`$up, by = c("external_gene_name" = "Gene"))
 annot_up_PC <- inner_join(annot_up_PC, deg_out$`PC_vs_HC    = PC  - HC`$up, by = c("external_gene_name" = "Gene"))
-annot_up_UCD <- inner_join(annot_up_UCD, deg_out$`UCD_vs_HC   = UCD - HC`$up, by = c("external_gene_name" = "Gene"))
+annot_up_UCD <- inner_join(annot_up_UCD, deg_out$`UCD_vs_HC    = UCD  - HC`$up, by = c("external_gene_name" = "Gene"))
 annot_up_CRC <- inner_join(annot_up_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$up, by = c("external_gene_name" = "Gene"))
 
 # DOWN DEG table entreze id annotated
 annot_down_LSC <- inner_join(annot_down_LSC, deg_out$`LSC_vs_HC   = LSC - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_PC <- inner_join(annot_down_PC, deg_out$`PC_vs_HC    = PC  - HC`$down, by = c("external_gene_name" = "Gene"))
-annot_down_UCD <- inner_join(annot_down_UCD, deg_out$`UCD_vs_HC   = UCD - HC`$down, by = c("external_gene_name" = "Gene"))
+annot_down_UCD <- inner_join(annot_down_UCD, deg_out$`UCD_vs_HC    = UCD  - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_CRC <- inner_join(annot_down_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$down, by = c("external_gene_name" = "Gene"))
 
 
@@ -698,22 +701,6 @@ Heatmap(
   column_names_gp = gpar(fontsize = 5)
 )
 
-# Box Plot of Mean DEG Expression per Sample by Disease
-
-# Explicitly reorder disease levels
-integrated_meta_data$condition <- factor(integrated_meta_data$condition,
-                                       levels = c("HC", "LSC", "PC", "qUC", "UCD","AD","CRC"))
-
-# Recalculate sample-wise means (if not already)
-sample_means <- colMeans(heat_expr_mat)
-
-# Plot
-boxplot(sample_means ~ integrated_meta_data$condition,
-        ylab = "Mean Z-score Expression",
-        xlab = "Disease",
-        main = "Mean DEG Expression per Sample by Disease",
-        col = c("orange", "green", "purple","lightblue","pink"),)
-
 #--------------------------------------------------------------------------
 # PPI Network Analysis
 # Load the functions for PPI network analysis
@@ -867,7 +854,7 @@ modules_PC_vs_HC_down <- detect_ppi_modules(
 # Building PPI network
 network_UCD_vs_HC_up <- build_ppi_network(
   deg_out = deg_out,
-  condition = "UCD_vs_HC   = UCD - HC",
+  condition = "UCD_vs_HC    = UCD  - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
   save = FALSE,
@@ -878,7 +865,7 @@ network_UCD_vs_HC_up <- build_ppi_network(
 # Identify hub genes
 hubs_UCD_vs_HC_up <- identify_hub_genes(
   g = network_UCD_vs_HC_up$graph,
-  condition = "UCD_vs_HC   = UCD - HC",
+  condition = "UCD_vs_HC    = UCD  - HC",
   regulation = "up",  # Options: "up" , "down"
   save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/UP",
@@ -888,7 +875,7 @@ hubs_UCD_vs_HC_up <- identify_hub_genes(
 # Detect modules
 modules_UCD_vs_HC_up <- detect_ppi_modules(
   g = network_UCD_vs_HC_up$graph,
-  condition = "UCD_vs_HC   = UCD - HC",
+  condition = "UCD_vs_HC    = UCD  - HC",
   regulation = "up", # Options: "up" , "down"
   save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/UP",
@@ -900,7 +887,7 @@ modules_UCD_vs_HC_up <- detect_ppi_modules(
 # Building PPI network
 network_UCD_vs_HC_down <- build_ppi_network(
   deg_out = deg_out,
-  condition = "UCD_vs_HC   = UCD - HC",
+  condition = "UCD_vs_HC    = UCD  - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
   save = FALSE,
@@ -911,7 +898,7 @@ network_UCD_vs_HC_down <- build_ppi_network(
 # Identify hub genes
 hubs_UCD_vs_HC_down <- identify_hub_genes(
   g = network_UCD_vs_HC_down$graph,
-  condition = "UCD_vs_HC   = UCD - HC",
+  condition = "UCD_vs_HC    = UCD  - HC",
   regulation = "down",  # Options: "up" , "down"
   save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/DOWN",
@@ -921,7 +908,7 @@ hubs_UCD_vs_HC_down <- identify_hub_genes(
 # Detect modules
 modules_UCD_vs_HC_down <- detect_ppi_modules(
   g = network_UCD_vs_HC_down$graph,
-  condition = "UCD_vs_HC   = UCD - HC",
+  condition = "UCD_vs_HC    = UCD  - HC",
   regulation = "down", # Options: "up" , "down"
   save = FALSE,
   out_dir = "results/UCD_vs_HC/PPI/DOWN",
@@ -978,7 +965,7 @@ network_CRC_vs_HC_down <- build_ppi_network(
 
 # Identify hub genes
 hubs_CRC_vs_HC_down <- identify_hub_genes(
-  g = network_AD_vs_HC_down$graph,
+  g = network_CRC_vs_HC_down$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "down",  # Options: "up" , "down"
   save = FALSE,
@@ -988,7 +975,7 @@ hubs_CRC_vs_HC_down <- identify_hub_genes(
 
 # Detect modules
 modules_CRC_vs_HC_down <- detect_ppi_modules(
-  g = network_AD_vs_HC_down$graph,
+  g = network_CRC_vs_HC_down$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "down", # Options: "up" , "down"
   save = FALSE,
@@ -1003,6 +990,20 @@ hub_genes <- list(
   PC <- unique(c(hubs_PC_vs_HC_up$hub_df$Gene_Symbol,hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
   UCD <- unique(c(hubs_UCD_vs_HC_up$hub_df$Gene_Symbol,hubs_UCD_vs_HC_down$hub_df$Gene_Symbol)),
   CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol,hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
+)
+
+hub_genes <- list(
+  LSC <- unique(c(hubs_LSC_vs_HC_up$hub_df$Gene_Symbol)),
+  PC <- unique(c(hubs_PC_vs_HC_up$hub_df$Gene_Symbol)),
+  UCD <- unique(c(hubs_UCD_vs_HC_up$hub_df$Gene_Symbol)),
+  CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol))
+)
+
+hub_genes <- list(
+  LSC <- unique(c(hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
+  PC <- unique(c(hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
+  UCD <- unique(c(hubs_UCD_vs_HC_down$hub_df$Gene_Symbol)),
+  CRC <- unique(c(hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
 )
 
 
@@ -1074,4 +1075,91 @@ ggVennDiagram(venn_list, label_alpha = 0, label = "count") +
   theme_void() +
   ggtitle("Hub Genes Across UC to CRC progression") +
   theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+
+# common genes between Stages
+
+LSC_PC <- intersect(LSC, PC)
+PC_CRC <- intersect(PC, CRC)
+
+UC <- intersect(LSC_PC, PC_CRC)
+
+UC_CRC <- intersect(UC, CRC) # early to CRC common significantly hub markers
+
+
+
+# > LSC_PC
+# [1] "IL1B"    "CXCL8"   "MMP9"    "CXCL1"   "LCN2"    "CXCL2"   "CXCR2"   "CXCL13"  "CXCL5"   "S100A12" "CXCL11"  "MMP1"    "CCL18"  
+# [14] "CXCL3" 
+# > LSC_CRC
+# [1] "IL1B"   "CXCL8"  "CXCL1"  "LCN2"   "CXCL5"  "CXCL9"  "CXCL11" "MMP1" 
+#> PC_CRC
+# [1] "IL1B"   "CXCL8"  "LCN2"   "CXCL1"  "CXCL5"  "MMP3"   "MMP1"   "CXCL11"
+----- 
+# > UC_CRC
+# [1] "IL1B"   "CXCL8"  "CXCL1"  "LCN2"   "CXCL5"  "CXCL11" "MMP1" 
+
+# Enrichment of Common hub genes between Stages for shared pathway identification
+
+# annotations of common genes to entrenz id
+
+get_entrez <- function(gene_list) {
+  getBM(
+    attributes = c("external_gene_name", "entrezgene_id"),
+    filters = "external_gene_name",
+    values = gene_list,
+    mart = ensembl
+  ) %>% distinct()
+}
+
+UC_CRC_annot <- get_entrez(UC_CRC)
+
+source("scripts/enrichment.R")
+#-------------------------------------------------------------------------------
+# UP HUB genes Common UC to CRC
+fc_values <- annot_up_LSC$logFC
+names(fc_values) <- annot_up_LSC$external_gene_name   # make sure IDs match enrichment
+
+res <- run_enrichment(
+  gene_list  = UC_CRC_annot$entrezgene_id,  # Entrez IDs of DEGs table
+  fc_values  = NULL,                   # gene vector of logFC values
+  prefix     = "UC_vs_CRC_HUB_up",              # File naming prefix
+  outdir     = "results/UC_vs_CRC_HUB/Enrichment/UP",      # dir name
+  showCategory = 15,
+  save_tables = TRUE
+)
+
+#---Box Plot of genes Expression Across Disease Groups----
+
+# Load
+
+# Define pairwise comparisons (optional)
+
+my_comparisons <- list(
+  c("HC", "LSC"), c("HC", "PC"), c("HC", "UCD"), c("HC", "CRC")
+)
+
+gene_id <- "CCL18"
+title <- NULL
+
+
+expr_vec <- as.numeric(batch_corrected_expr[gene_id, ])
+if (length(expr_vec) != nrow(integrated_meta_data)) stop("Expression and metadata mismatch")
+
+# Create data frame for plotting
+plot_df <- data.frame(
+  expr = expr_vec,
+  group = factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
+)
+
+# Generate boxplot using ggpubr
+p <- ggboxplot(plot_df, x = "group", y = "expr", fill = "group",
+              add =  "jitter", notch = TRUE) +
+  labs(
+    title = ifelse(is.null(title), paste("Expression of", gene_id), title),
+    x = "Disease", y = "Batch Corrected Expression (log2)"
+  ) +
+  theme_bw(base_size = 13) + stat_compare_means(comparisons = my_comparisons, method = "wilcox.test", label = "p.signif", hide.ns = TRUE)
+
+
+
 
