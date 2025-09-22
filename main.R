@@ -18,6 +18,8 @@ BiocManager::install("ReactomePA")
 BiocManager::install("ComplexHeatmap")
 BiocManager::install("colorRamp2")
 BiocManager::install("ggVennDiagram")
+BiocManager::install("hpar")
+BiocManager::install("pheatmap")
 
 # load packages
 library(GEOquery)
@@ -38,7 +40,8 @@ library(ReactomePA)
 library(ComplexHeatmap)
 library(colorRamp2)
 library(ggVennDiagram)
-
+library(hpar)
+library(pheatmap)
 
 
 # GEO data set load local downloaded files
@@ -1161,5 +1164,177 @@ p <- ggboxplot(plot_df, x = "group", y = "expr", fill = "group",
   theme_bw(base_size = 13) + stat_compare_means(comparisons = my_comparisons, method = "wilcox.test", label = "p.signif", hide.ns = TRUE)
 
 
+# Validation with HPA db
+
+# Install required packages if not already installed
+
+
+# Example hub gene list
+hub_genes <- c("IL1B", "CXCL8", "CXCL1", "LCN2", "CXCL5", "CXCL11", "MMP1")  # replace with your genes
+
+# Load all HPA pathology data
+hpa_data <- allHparData()    # this contain all the data from HPA
+
+# Load cancer data of HPA version 16.1
+cancer_types <- hpaCancer16.1()
+
+#Filter cancer
+colorectal_cancer <- cancer_types %>% 
+  filter(str_detect(Tumor, "colon|rectum|colorectal"))
+
+# filter hub genes to HPA database
+hub_in_crc <- colorectal_cancer %>%
+  filter(Gene.name %in% hub_genes)
+
+# summary
+
+hub_summary <- hub_in_crc %>%
+  dplyr::select(Gene.name, Level, Count.patients, Total.patients) %>%
+  tidyr::pivot_wider(names_from = Level, values_from = Count.patients, values_fill = 0)
+
+hub_summary
+
+--------------------------------------------------------------------------------
+# Visualization
+ggplot(hub_in_crc, aes(x = Gene.name, y = Count.patients, fill = Level)) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values = c("Not detected"="grey80",
+                               "Low"="skyblue",
+                               "Medium"="orange",
+                               "High"="red")) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Hub Gene Expression in Colorectal Cancer (HPA)",
+       y = "Proportion of Patients", x = "Genes") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+heat_mat <- hub_summary %>%
+  tibble::column_to_rownames("Gene.name") %>%
+  dplyr::select(High, Medium, Low, `Not detected`) %>%
+  as.matrix()
+
+pheatmap(heat_mat,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         color = colorRampPalette(c("grey95","skyblue","orange","red"))(50),
+         main = "HPA Colorectal Cancer: Hub Genes (Patient Counts)",
+         fontsize = 12)
+
+ggplot(hub_in_crc, aes(x = Gene.name, y = Count.patients, fill = Level)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  scale_fill_manual(values = c("Not detected"="grey80",
+                               "Low"="skyblue",
+                               "Medium"="orange",
+                               "High"="red")) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Hub Genes: Patient Counts by Expression Level (HPA CRC)",
+       y = "Number of Patients", x = "Genes") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+install.packages("ggalluvial")
+library(ggalluvial)
+
+ggplot(hub_in_crc,
+       aes(axis1 = Gene.name, axis2 = Level, y = Count.patients)) +
+  geom_alluvium(aes(fill = Level), width = 1/12) +
+  geom_stratum(width = 1/12, fill = "grey90", color = "grey40") +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  scale_fill_manual(values = c("Not detected"="grey80",
+                               "Low"="skyblue",
+                               "Medium"="orange",
+                               "High"="red")) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Hub Genes – Patient Distribution (HPA CRC)",
+       y = "Patient Counts", x = "")
+--------------------------------------------------------------------------------
+
+# Expression in normal tissues
+
+# Load cancer data of HPA version 16.1
+normal_types <- hpaNormalTissue16.1()
+
+#Filter cancer
+common_hub_genes <- normal_types %>% 
+filter(str_detect(Tissue, "colon|rectum|colorectal"))
+
+# filter hub genes to HPA database
+normal_tissue <- common_hub_genes %>%
+filter(Gene.name %in% hub_genes)
+
+ggplot(normal_tissue, aes(x = Gene.name, fill = Level)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("Not detected"="grey80",
+                               "Low"="skyblue",
+                               "Medium"="orange",
+                               "High"="red")) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Hub Gene Expression in Normal Colon/Rectum (HPA v16.1)",
+       y = "Proportion of Cell Types", x = "Genes") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# summary
+
+hub_summary <- hub_in_crc %>%
+  dplyr::select(Gene.name, Level, Count.patients, Total.patients) %>%
+  tidyr::pivot_wider(names_from = Level, values_from = Count.patients, values_fill = 0)
+
+hub_summary
+
+
+# rnaGtexTissue Normal RNA-seq, healthy colon/rectum samples
+
+normal_rna_types <- rnaGtexTissue()
+
+#Filter cancer
+common_hub_genes_rna <- normal_rna_types %>% 
+  filter(str_detect(Tissue, "colon|rectum|colorectal"))
+
+# filter hub genes to HPA database
+normal_rna_tissue <- common_hub_genes_rna %>%
+  filter(Gene.name %in% hub_genes)
+
+
+ggplot(normal_rna_tissue, aes(x = Gene.name, y = TPM, fill = Gene.name)) +
+  geom_col(width = 0.7, alpha = 0.8, show.legend = FALSE) +
+  geom_text(aes(label = round(TPM,1)), vjust = -0.5, size = 4) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Hub Gene Expression in Normal Colon (RNA-seq, TPM)",
+       x = "Genes", y = "TPM")
+
+ggplot(normal_rna_tissue, aes(x = reorder(Gene.name, TPM), y = TPM)) +
+  geom_segment(aes(xend = Gene.name, y = 0, yend = TPM), color = "grey60") +
+  geom_point(size = 6, color = "firebrick") +
+  geom_text(aes(label = round(TPM,1)), hjust = -0.3, size = 4) +
+  coord_flip() +
+  theme_minimal(base_size = 14) +
+  labs(title = "Hub Genes Ranked by Expression in Colon (TPM)",
+       x = "Genes", y = "TPM")
+
+#comparison
+--------------------
+# Prepare cancer data (assuming hub_in_crc already exists)
+  cancer_plot <- hub_in_crc %>%
+  mutate(Source = "Cancer") %>%
+  select(Gene.name, Level, Source, Count.patients)
+
+# Prepare normal data
+normal_plot <- normal_tissue %>%
+  mutate(Source = "Normal",
+         Count.patients = 1) %>%   # each row = one sample (cell type), so weight = 1
+  select(Gene.name, Level, Source, Count.patients)
+
+# Combine
+combined_plot <- bind_rows(cancer_plot, normal_plot)
+
+ggplot(combined_plot, aes(x = Gene.name, fill = Level, weight = Count.patients)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~Source) +
+  scale_fill_manual(values = c("Not detected"="grey80",
+                               "Low"="skyblue",
+                               "Medium"="orange",
+                               "High"="red")) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Hub Genes Expression: Cancer vs Normal (HPA v16.1)",
+       y = "Proportion", x = "Genes") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
