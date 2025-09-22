@@ -40,121 +40,47 @@ library(ggVennDiagram)
 
 # GEO data set load local downloaded files
 
-#UC
-gset1 <- getGEO(filename = "GEO_Datasets/GSE47908_series_matrix.txt.gz", getGPL = FALSE)  # RMA
-gset2 <- getGEO(filename = "GEO_Datasets/GSE13367_series_matrix.txt.gz", getGPL = FALSE)  # RMA
-gset3 <- getGEO(filename = "GEO_Datasets/GSE36807_series_matrix.txt.gz", getGPL = FALSE)  # RMA
-gset4 <- getGEO(filename = "GEO_Datasets/GSE9452_series_matrix.txt.gz", getGPL = FALSE)   # RMA
-
-#CRC
-
-gset6 <- getGEO(filename = "GEO_Datasets/GSE110224_series_matrix.txt.gz", getGPL = FALSE) #RMA
+gset1 <- getGEO(filename = "GEO_Datasets/GSE47908_series_matrix.txt.gz", getGPL = FALSE)  # RMA UC  - data set
+gset2 <- getGEO(filename = "GEO_Datasets/GSE110224_series_matrix.txt.gz", getGPL = FALSE) # RMA CRC - data set
 
 # meta data
 
 meta1 <- pData(gset1)
 meta2 <- pData(gset2)
-meta3 <- pData(gset3)
-meta4 <- pData(gset4)
 
-meta5 <- pData(gset5)
-meta6 <- pData(gset6)
 # expression data
 
 exp1 <- exprs(gset1)
 exp2 <- exprs(gset2)
-exp3 <- exprs(gset3)
-exp4 <- exprs(gset4)
-
-exp5 <- exprs(gset5)
-exp6 <- exprs(gset6)
 
 # cleaning meta data
-
+#meta1
 meta1$`disease state:ch1` <- make.names(meta1$`disease state:ch1`)
 meta1$title <- make.names(meta1$title)
 
 meta1_clean <- meta1 %>% 
   dplyr::select(1,32) %>% 
   dplyr::rename(condition = colnames(meta1)[32]) %>%
-  dplyr::mutate(condition = gsub("left.sided.coltis","UC",condition)) %>% 
-  dplyr::mutate(condition = gsub("pancolitis","UC",condition)) %>% 
+  dplyr::mutate(condition = gsub("left.sided.coltis","LSC",condition)) %>% 
+  dplyr::mutate(condition = gsub("pancolitis","PC",condition)) %>% 
   dplyr::mutate(condition = gsub("ulcerative.colitis.associated.dysplasia","UCD",condition)) %>% 
   dplyr::mutate(condition = gsub("control","HC",condition)) %>% 
   dplyr::mutate(title = gsub(".\\d+$","",title)) %>% 
   dplyr::mutate(batch = "1")
 
-group1 <- factor(meta1_clean$condition, levels = c("HC","UC","UCD"))
+group1 <- factor(meta1_clean$condition, levels = c("HC","LSC","PC","UCD"))
 
 #meta2
-meta2$characteristics_ch1 <- make.names(meta2$characteristics_ch1)
+meta2$`tissue:ch1` <- make.names(meta2$`tissue:ch1`)
 
 meta2_clean <- meta2 |> 
-  dplyr::select(1,,8,10) |> 
-  dplyr::rename(condition = colnames(meta2)[10]) |> 
-  dplyr::filter(!grepl("Colonocytes from human colonic mucosa", source_name_ch1)) |> 
-  dplyr::filter(!grepl("Collagen.colitis..excluded.", condition)) |> 
-  dplyr::mutate(condition = gsub("UC.inflamed","UC",condition)) |> 
-  dplyr::mutate(condition = gsub("UC.non.inflamed","qUC",condition)) |> 
-  dplyr::mutate(condition = gsub("Control","HC",condition)) |>
+  dplyr::select(1,62) |> 
+  dplyr::rename(condition = colnames(meta2)[62]) |> 
+  dplyr::mutate(condition = gsub("normal.adjacent","HC",condition)) |> 
+  dplyr::mutate(condition = gsub("primary.colorectal.adenocarcinoma","CRC",condition)) |> 
   dplyr::mutate(batch = "2")
 
-meta2_clean <- meta2_clean[,-2]
-
-group2 <- factor(meta2_clean$condition, levels = c("HC","UC","qUC"))
-
-#meta3
-meta3$`diagnosis:ch1` <- make.names(meta3$`diagnosis:ch1`)
-
-meta3_clean <- meta3 |> 
-  dplyr::select(1,32) |> 
-  dplyr::rename(condition = colnames(meta3)[32]) |> 
-  dplyr::filter(!grepl("Crohn.s.Disease", condition)) |> 
-  dplyr::mutate(condition = gsub("Healthy.control","HC",condition)) |> 
-  dplyr::mutate(condition = gsub("Ulcerative.colitis","UC",condition)) |> 
-  dplyr::mutate(batch = "3")
-
-group3 <- factor(meta3_clean$condition, levels = c("HC","UC"))
-
-#meta4
-meta4$characteristics_ch1 <- make.names(meta4$characteristics_ch1)
-
-meta4_clean <- meta4 |> 
-  dplyr::select(1,10) |> 
-  dplyr::rename(condition = colnames(meta4)[10]) |> 
-  dplyr::mutate(condition = gsub("Ulcerative.colitis.patient..biopsy.taken.from.the.descending.colon..macroscopic.inflammation.vissible","UC",condition)) |> 
-  dplyr::mutate(condition = gsub("Ulcerative.colitis.patient..biopsy.taken.from.the.descending.colon..no.macroscopic.signs.of.inflammation.","UC",condition)) |> 
-  dplyr::mutate(condition = gsub("Control.subject..biopsy.taken.from.the.colon..no.macroscopic.signs.of.inflammation.","HC",condition)) |> 
-  dplyr::mutate(condition = gsub("Control.subject..biopsy.taken.from.the.sigmoideum..no.macroscopic.signs.of.inflammation.","HC",condition)) |> 
-  dplyr::mutate(condition = gsub("Ulcerative.colitis.patient..biopsy.taken.from.the.colon..no.macroscopic.signs.of.inflammation.","qUC",condition)) |> 
-  dplyr::mutate(condition = gsub("Ulcerative.colitis.patient..biopsy.taken.from.the.sigmoideum..no.macroscopic.signs.of.inflammation.","qUC",condition)) |> 
-  dplyr::mutate(batch = "4")
-
-group4 <- factor(meta4_clean$condition, levels = c("HC","UC","qUC"))
-
-#meta5
-meta5$`tissue:ch1` <- make.names(meta5$`tissue:ch1`)
-
-meta5_clean <- meta5 |> 
-  dplyr::select(1,62) |> 
-  dplyr::rename(condition = colnames(meta5)[62]) |> 
-  dplyr::mutate(condition = gsub("normal.adjacent","HC",condition)) |> 
-  dplyr::mutate(condition = gsub("primary.colorectal.adenocarcinoma","CRC",condition)) |> 
-  dplyr::mutate(batch = "5")
-
-group5 <- factor(meta5_clean$condition, levels = c("HC","CRC"))
-
-#meta6
-meta6$`tissue:ch1` <- make.names(meta6$`tissue:ch1`)
-
-meta6_clean <- meta6 |> 
-  dplyr::select(1,62) |> 
-  dplyr::rename(condition = colnames(meta6)[62]) |> 
-  dplyr::mutate(condition = gsub("normal.adjacent","HC",condition)) |> 
-  dplyr::mutate(condition = gsub("primary.colorectal.adenocarcinoma","CRC",condition)) |> 
-  dplyr::mutate(batch = "6")
-
-group6 <- factor(meta6_clean$condition, levels = c("HC","CRC"))
+group2 <- factor(meta2_clean$condition, levels = c("HC","CRC"))
 
 
 # exp samples kept based on the metadata selection of samples
@@ -164,23 +90,6 @@ exp1 <- exp1[,rownames(meta1_clean)]
 
 meta2_clean <- meta2_clean[order(group2),]
 exp2 <- exp2[,rownames(meta2_clean)]
-
-meta3_clean <- meta3_clean[order(group3),]
-exp3 <- exp3[,rownames(meta3_clean)]
-
-meta4_clean <- meta4_clean[order(group4),]
-exp4 <- exp4[,rownames(meta4_clean)]
-
-meta5_clean <- meta5_clean[order(group5),]
-exp5 <- exp5[,rownames(meta5_clean)]
-
-meta6_clean <- meta6_clean[order(group6),]
-exp6 <- exp6[,rownames(meta6_clean)]
-
-
-#boxplot(exp1,outline=FALSE,las=2,main="GSE47908")
-#boxplot(exp2,outline=FALSE,las=2,main="GSE20916")
-#oxplot(exp3,outline=FALSE,las=2,main="GSE37283")
 
 
 #Probe annotation using bio mart
@@ -213,54 +122,6 @@ annot_expr2 <- getBM(
 
 colnames(annot_expr2) <- c("probe_id","gene_symbol")
 
-#Annotate expr3 data
-probe_ids3 <- rownames(exp3) #[HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
-
-annot_expr3 <- getBM(
-  attribute = c("affy_hg_u133_plus_2", "external_gene_name"),
-  filters = "affy_hg_u133_plus_2",
-  values = probe_ids3,
-  mart = ensembl
-)
-
-colnames(annot_expr3) <- c("probe_id","gene_symbol")
-
-#Annotate expr4 data
-probe_ids4 <- rownames(exp4) #[HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
-
-annot_expr4 <- getBM(
-  attribute = c("affy_hg_u133_plus_2", "external_gene_name"),
-  filters = "affy_hg_u133_plus_2",
-  values = probe_ids4,
-  mart = ensembl
-)
-
-colnames(annot_expr4) <- c("probe_id","gene_symbol")
-
-#Annotate expr5 data
-probe_ids5 <- rownames(exp5) #[HG-U133_Plus_2] Affymetrix Human Genome U133 Plus 2.0 Array
-
-annot_expr5 <- getBM(
-  attribute = c("affy_hg_u133_plus_2", "external_gene_name"),
-  filters = "affy_hg_u133_plus_2",
-  values = probe_ids5,
-  mart = ensembl
-)
-
-colnames(annot_expr5) <- c("probe_id","gene_symbol")
-
-#Annotate expr6 data
-probe_ids6 <- rownames(exp6) #[HG-U133_Plus_2] Affymetrix Human Genome U133 Plus 2.0 Array
-
-annot_expr6 <- getBM(
-  attribute = c("affy_hg_u133_plus_2", "external_gene_name"),
-  filters = "affy_hg_u133_plus_2",
-  values = probe_ids6,
-  mart = ensembl
-)
-
-colnames(annot_expr6) <- c("probe_id","gene_symbol")
-
 
 # Merge annotation with expression data
 #expr1
@@ -284,88 +145,28 @@ expr2_annotated <- inner_join(annot_expr2,expr2,by = "probe_id") |>
   filter(!if_any(where(is.numeric), is.na)) |>
   tibble::column_to_rownames(var = "gene_symbol")
 
-#expr3
-expr3 <- as.data.frame(exp3)
-expr3$probe_id <- rownames(expr3)
-
-expr3_annotated <- inner_join(annot_expr3,expr3,by = "probe_id") |>
-  filter(gene_symbol != "") |>
-  group_by(gene_symbol) |>
-  summarize(across(where(is.numeric),mean)) |>
-  filter(!if_any(where(is.numeric), is.na)) |>
-  tibble::column_to_rownames(var = "gene_symbol")
-
-#expr4
-expr4 <- as.data.frame(exp4)
-expr4$probe_id <- rownames(expr4)
-
-expr4_annotated <- inner_join(annot_expr4,expr4,by = "probe_id") |>
-  filter(gene_symbol != "") |>
-  group_by(gene_symbol) |>
-  summarize(across(where(is.numeric),mean)) |>
-  filter(!if_any(where(is.numeric), is.na)) |>
-  tibble::column_to_rownames(var = "gene_symbol")
-
-#expr5
-expr5 <- as.data.frame(exp5)
-expr5$probe_id <- rownames(expr5)
-
-expr5_annotated <- inner_join(annot_expr5,expr5,by = "probe_id") |>
-  filter(gene_symbol != "") |>
-  group_by(gene_symbol) |>
-  summarize(across(where(is.numeric),mean)) |>
-  filter(!if_any(where(is.numeric), is.na)) |>
-  tibble::column_to_rownames(var = "gene_symbol")
-
-#expr6
-expr6 <- as.data.frame(exp6)
-expr6$probe_id <- rownames(expr6)
-
-expr6_annotated <- inner_join(annot_expr6,expr6,by = "probe_id") |>
-  filter(gene_symbol != "") |>
-  group_by(gene_symbol) |>
-  summarize(across(where(is.numeric),mean)) |>
-  filter(!if_any(where(is.numeric), is.na)) |>
-  tibble::column_to_rownames(var = "gene_symbol")
-
-
 #Merge by common gene and prepare final integration expr data
 
 ## Find common genes
 
-common_genes <- intersect(rownames(expr1_annotated),rownames(expr6_annotated))
-
-common_genes <- intersect(com_platform,rownames(expr3_annotated))
-
-common_genes <- intersect(common_genes,rownames(expr4_annotated))
+common_genes <- intersect(rownames(expr1_annotated),rownames(expr2_annotated))
 
 ## Subset both data sets to include only common genes
-integrated_expr_data <- cbind(
-  expr1_annotated[common_genes, ],
-  expr2_annotated[common_genes, ],
-  expr3_annotated[common_genes, ],
-  expr4_annotated[common_genes, ]
-)
 
 integrated_expr_data <- cbind(
   expr1_annotated[common_genes, ],
-  expr6_annotated[common_genes, ]
+  expr2_annotated[common_genes, ]
 )
 
 ## integrated meta data
-integrated_meta_data <- rbind(meta1_clean, meta6_clean)
+integrated_meta_data <- rbind(meta1_clean, meta2_clean)
 
-group_meta_data <- factor(integrated_meta_data$condition, levels = c("HC", "UC","UCD","CRC"))
+group_meta_data <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
 
 integrated_meta_data <- integrated_meta_data[order(group_meta_data),]
 
 # Reorder the columns of the expression data to match the row order of the metadata
 integrated_expr_data <- integrated_expr_data[,rownames(integrated_meta_data)]
-
-dup_expr <- colnames(integrated_expr_data)[duplicated(colnames(integrated_expr_data))]
-dup_expr
-dup_meta <- rownames(integrated_meta_data)[duplicated(rownames(integrated_meta_data))]
-dup_meta
 
 # verify checks
 all(colnames(integrated_expr_data) == rownames(integrated_meta_data))
@@ -418,7 +219,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "UC", "UCD", "CRC")
+  levels = c("HC", "LSC","PC","UCD","CRC")
 )
 
 
@@ -430,7 +231,8 @@ raw_exp_boxplot <- ggplot(final_melted_data,
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "UC" = "green",
+      "LSC" = "green",
+      "PC"  = "purple",
       "UCD"  = "orange",
       "CRC" = "blue"
     )
@@ -446,7 +248,8 @@ raw_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = con
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "UC" = "green",
+      "LSC" = "green",
+      "PC"  = "purple",
       "UCD"  = "orange",
       "CRC" = "blue"
     )
@@ -457,7 +260,7 @@ raw_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = con
 pca <- prcomp(t(integrated_expr_data), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "UC", "UCD", "CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
 pca_df$batch <- integrated_meta_data$batch
 
 raw_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
@@ -500,7 +303,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "UC", "UCD", "CRC")
+  levels = c("HC", "LSC","PC","UCD","CRC")
 )
 
 # Create the box plot
@@ -511,7 +314,8 @@ normalized_exp_boxplot <- ggplot(final_melted_data,
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "UC" = "green",
+      "LSC" = "green",
+      "PC"  = "purple",
       "UCD"  = "orange",
       "CRC" = "yellow"
     )
@@ -527,7 +331,8 @@ normalized_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fil
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "UC" = "green",
+      "LSC" = "green",
+      "PC"  = "purple",
       "UCD"  = "orange",
       "CRC" = "yellow"
     )
@@ -537,7 +342,7 @@ normalized_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fil
 pca <- prcomp(t(normalized_expr_data), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "UC", "UCD", "CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
 pca_df$batch <- integrated_meta_data$batch
 
 normalized_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
@@ -583,7 +388,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "UC", "UCD", "qUC")
+  levels = c("HC", "LSC","PC","UCD","CRC")
 )
 
 # Create the box plot
@@ -594,7 +399,8 @@ batch_corrected_exp_boxplot <- ggplot(final_melted_data,
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "UC" = "green",
+      "LSC" = "green",
+      "PC"  = "purple",
       "UCD"  = "orange",
       "CRC" = "yellow"
     )
@@ -610,7 +416,8 @@ batch_corrected_exp_density_plot <- ggplot(final_melted_data, aes(x = expression
   scale_fill_manual(
     values = c(
       "HC"  = "gray",
-      "UC" = "green",
+      "LSC" = "green",
+      "PC"  = "purple",
       "UCD"  = "orange",
       "CRC" = "yellow"
     )
@@ -621,7 +428,7 @@ batch_corrected_exp_density_plot <- ggplot(final_melted_data, aes(x = expression
 pca <- prcomp(t(batch_corrected_expr), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "UC", "UCD", "CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
 pca_df$batch <- integrated_meta_data$batch
 
 
@@ -638,19 +445,11 @@ batch_corrected_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Gro
 source("scripts/deg_functions.R")
 
 # Contrast selection for differential expression analysis
-custom_contrasts <- c(        # Step-wise Comparison for (local shift at each stage progression)
-  "LSC_vs_HC = LSC - HC",     # best for diagnostic markers
-  "PC_vs_LSC = PC - LSC",
-  "qUC_vs_PC = qUC - PC",
-  "UCD_vs_qUC = UCD - qUC",
-  "AD_vs_UCD = AD - UCD",
-  "CRC_vs_AD = CRC - AD",
-  "CRC_vs_HC = CRC - HC"
-)
 
 custom_contrasts <- c(
-  "UC_vs_HC   = UC - HC",   # Cumulative Contrast (exp deviation from HC as disease accumulates) 
-  "UCD_vs_HC    = UCD  - HC",   # helps identify early vs late markers
+  "LSC_vs_HC   = LSC - HC",       # Cumulative Contrast (exp deviation from HC as disease accumulates) 
+  "PC_vs_HC    = PC  - HC",       # helps identify early vs late markers
+  "UCD_vs_HC    = UCD  - HC",   
   "CRC_vs_HC   = CRC - HC"
 )
 
@@ -674,14 +473,12 @@ deg_out <- run_deg_analysis(
 genes_up_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$up$Gene
 genes_up_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$up$Gene
 genes_up_UCD <- deg_out$`UCD_vs_HC   = UCD - HC`$up$Gene
-genes_up_AD <- deg_out$`AD_vs_HC    = AD  - HC`$up$Gene
 genes_up_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$up$Gene
 
 # for down reg
 genes_down_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$down$Gene
 genes_down_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$down$Gene
 genes_down_UCD <- deg_out$`UCD_vs_HC   = UCD - HC`$down$Gene
-genes_down_AD <- deg_out$`AD_vs_HC    = AD  - HC`$down$Gene
 genes_down_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$down$Gene
 
 --------------------------------------------------------------------------------
@@ -707,14 +504,12 @@ get_entrez <- function(gene_list) {
 annot_up_LSC <- get_entrez(genes_up_LSC)
 annot_up_PC <- get_entrez(genes_up_PC)
 annot_up_UCD <- get_entrez(genes_up_UCD)
-annot_up_AD <- get_entrez(genes_up_AD)
 annot_up_CRC <- get_entrez(genes_up_CRC)
 
 # for Down-reg
 annot_down_LSC <- get_entrez(genes_down_LSC)
 annot_down_PC <- get_entrez(genes_down_PC)
 annot_down_UCD <- get_entrez(genes_down_UCD)
-annot_down_AD <- get_entrez(genes_down_AD)
 annot_down_CRC <- get_entrez(genes_down_CRC)
 
 #---Enrichment Analysis (GO/KEGG/Reactome)----
@@ -722,14 +517,12 @@ annot_down_CRC <- get_entrez(genes_down_CRC)
 annot_up_LSC <- inner_join(annot_up_LSC, deg_out$`LSC_vs_HC   = LSC - HC`$up, by = c("external_gene_name" = "Gene"))
 annot_up_PC <- inner_join(annot_up_PC, deg_out$`PC_vs_HC    = PC  - HC`$up, by = c("external_gene_name" = "Gene"))
 annot_up_UCD <- inner_join(annot_up_UCD, deg_out$`UCD_vs_HC   = UCD - HC`$up, by = c("external_gene_name" = "Gene"))
-annot_up_AD <- inner_join(annot_up_AD, deg_out$`AD_vs_HC    = AD  - HC`$up, by = c("external_gene_name" = "Gene"))
 annot_up_CRC <- inner_join(annot_up_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$up, by = c("external_gene_name" = "Gene"))
 
 # DOWN DEG table entreze id annotated
 annot_down_LSC <- inner_join(annot_down_LSC, deg_out$`LSC_vs_HC   = LSC - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_PC <- inner_join(annot_down_PC, deg_out$`PC_vs_HC    = PC  - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_UCD <- inner_join(annot_down_UCD, deg_out$`UCD_vs_HC   = UCD - HC`$down, by = c("external_gene_name" = "Gene"))
-annot_down_AD <- inner_join(annot_down_AD, deg_out$`AD_vs_HC    = AD  - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_CRC <- inner_join(annot_down_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$down, by = c("external_gene_name" = "Gene"))
 
 
@@ -813,32 +606,6 @@ res <- run_enrichment(
   save_tables = TRUE
 )
 
-# UP genes AD
-fc_values <- annot_up_AD$logFC
-names(fc_values) <- annot_up_AD$external_gene_name
-
-res <- run_enrichment(
-  gene_list  = annot_up_AD$entrezgene_id,  
-  fc_values  = fc_values,                   
-  prefix     = "AD_vs_HC_up",              
-  outdir     = "results/AD_vs_HC/Enrichment/UP",      
-  showCategory = 15,
-  save_tables = TRUE
-)
-
-# DOWN genes AD
-fc_values <- annot_down_AD$logFC
-names(fc_values) <- annot_down_AD$external_gene_name
-
-res <- run_enrichment(
-  gene_list  = annot_down_AD$entrezgene_id,
-  fc_values  = fc_values,                     
-  prefix     = "AD_vs_HC_down",              
-  outdir     = "results/AD_vs_HC/Enrichment/DOWN",      
-  showCategory = 15,
-  save_tables = TRUE
-)
-
 # UP genes CRC
 fc_values <- annot_up_CRC$logFC
 names(fc_values) <- annot_up_CRC$external_gene_name
@@ -876,8 +643,6 @@ top_genes <- unique(c(
   annot_down_PC$external_gene_name,
   annot_up_UCD$external_gene_name,
   annot_down_UCD$external_gene_name,
-  annot_up_AD$external_gene_name,
-  annot_down_AD$external_gene_name,
   annot_up_CRC$external_gene_name,
   annot_down_CRC$external_gene_name
 ))
@@ -902,13 +667,12 @@ col_ha <- HeatmapAnnotation(
   Disease = annotation_col$condition,
   Batch = annotation_col$batch,
   col = list(
-    Disease = c("HC"  = "gray",
-                "LSC" = "green",
-                "PC"  = "orange",
-                "qUC" = "yellow",
-                "UCD" = "red",
-                "AD"  = "blue",
-                "CRC" = "purple"
+    Disease = c(
+      "HC"  = "gray",
+      "LSC" = "green",
+      "PC"  = "purple",
+      "UCD"  = "orange",
+      "CRC" = "yellow"
     ),
     Batch = c("1" = "salmon", "2" = "gold", "3" = "lightblue")
   ),
@@ -948,7 +712,7 @@ boxplot(sample_means ~ integrated_meta_data$condition,
         ylab = "Mean Z-score Expression",
         xlab = "Disease",
         main = "Mean DEG Expression per Sample by Disease",
-        col = c("orange", "green", "purple", "cyan", "gray","lightblue","pink"),)
+        col = c("orange", "green", "purple","lightblue","pink"),)
 
 #--------------------------------------------------------------------------
 # PPI Network Analysis
@@ -1164,76 +928,6 @@ modules_UCD_vs_HC_down <- detect_ppi_modules(
   return_plot = TRUE
 )
 
-
-#===PPI > AD_vs_HC====
-# Process Multiple Regulation per contrasts matrix
-
-## up-regulation
-
-# Building PPI network
-network_AD_vs_HC_up <- build_ppi_network(
-  deg_out = deg_out,
-  condition = "AD_vs_HC    = AD  - HC",
-  regulation = "up",  # Options: "up" , "down"
-  top_n = 100,
-  save = FALSE,
-  out_dir = "results/AD_vs_HC/PPI/UP",
-  return_plot = TRUE
-)
-
-# Identify hub genes
-hubs_AD_vs_HC_up <- identify_hub_genes(
-  g = network_AD_vs_HC_up$graph,
-  condition = "AD_vs_HC    = AD  - HC",
-  regulation = "up",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/AD_vs_HC/PPI/UP",
-  return_plot = TRUE
-)
-
-# Detect modules
-modules_AD_vs_HC_up <- detect_ppi_modules(
-  g = network_AD_vs_HC_up$graph,
-  condition = "AD_vs_HC    = AD  - HC",
-  regulation = "up", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/AD_vs_HC/PPI/UP",
-  return_plot = TRUE
-)
-
-## down-regulation
-
-# Building PPI network
-network_AD_vs_HC_down <- build_ppi_network(
-  deg_out = deg_out,
-  condition = "AD_vs_HC    = AD  - HC",
-  regulation = "down",  # Options: "up" , "down"
-  top_n = 100,
-  save = FALSE,
-  out_dir = "results/AD_vs_HC/PPI/DOWN",
-  return_plot = TRUE
-)
-
-# Identify hub genes
-hubs_AD_vs_HC_down <- identify_hub_genes(
-  g = network_AD_vs_HC_down$graph,
-  condition = "AD_vs_HC    = AD  - HC",
-  regulation = "down",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/AD_vs_HC/PPI/DOWN",
-  return_plot = TRUE
-)
-
-# Detect modules
-modules_AD_vs_HC_down <- detect_ppi_modules(
-  g = network_AD_vs_HC_down$graph,
-  condition = "AD_vs_HC    = AD  - HC",
-  regulation = "down", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/AD_vs_HC/PPI/DOWN",
-  return_plot = TRUE
-)
-
 #===PPI > CRC_vs_HC====
 
 ## up-regulation
@@ -1308,7 +1002,6 @@ hub_genes <- list(
   LSC <- unique(c(hubs_LSC_vs_HC_up$hub_df$Gene_Symbol,hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
   PC <- unique(c(hubs_PC_vs_HC_up$hub_df$Gene_Symbol,hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
   UCD <- unique(c(hubs_UCD_vs_HC_up$hub_df$Gene_Symbol,hubs_UCD_vs_HC_down$hub_df$Gene_Symbol)),
-  AD <- unique(c(hubs_AD_vs_HC_up$hub_df$Gene_Symbol,hubs_AD_vs_HC_down$hub_df$Gene_Symbol)),
   CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol,hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
 )
 
@@ -1319,7 +1012,6 @@ top_genes <- unique(c(
   LSC,
   PC,
   UCD,
-  AD,
   CRC
 ))
 
@@ -1336,13 +1028,12 @@ col_ha <- HeatmapAnnotation(
   Disease = annotation_col$condition,
   Batch = annotation_col$batch,
   col = list(
-    Disease = c("HC"  = "gray",
-                "LSC" = "green",
-                "PC"  = "orange",
-                "qUC" = "yellow",
-                "UCD" = "red",
-                "AD"  = "blue",
-                "CRC" = "purple"
+    Disease = c(
+      "HC"  = "gray",
+      "LSC" = "green",
+      "PC"  = "purple",
+      "UCD"  = "orange",
+      "CRC" = "yellow"
     ),
     Batch = c("1" = "salmon", "2" = "gold", "3" = "lightblue")
   ),
@@ -1374,7 +1065,6 @@ venn_list <- list(
   LSC = LSC,
   PC = PC,
   UCD = UCD,
-  AD = AD,
   CRC = CRC
 )
 
@@ -1382,6 +1072,6 @@ venn_list <- list(
 ggVennDiagram(venn_list, label_alpha = 0, label = "count") +
   scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
   theme_void() +
-  ggtitle("Hub Genes Across Immune-Mediated Diseases") +
+  ggtitle("Hub Genes Across UC to CRC progression") +
   theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
 
