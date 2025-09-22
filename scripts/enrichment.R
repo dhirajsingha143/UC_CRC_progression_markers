@@ -36,14 +36,16 @@ run_enrichment <- function(
     }
     
     # ---- save all plots into a single PDF ----
-    pdf(file.path(outdir, paste0(prefix, "_", nm, ".pdf")), width = 10, height = 8)
+    pdf(file.path(outdir, paste0(prefix, "_", nm, ".pdf")), width = 12, height = 10)
     
     # standard plots
     print(barplot(enrich_res, showCategory = showCategory) + ggtitle(paste(nm, "Barplot")))
     print(dotplot(enrich_res, showCategory = showCategory) + ggtitle(paste(nm, "Dotplot")))
     
     if (nm %in% c("BP", "MF", "CC")) {
-      print(goplot(enrich_res, showCategory = showCategory) + ggtitle(paste(nm, "Goplot")) + theme(plot.title = element_text(hjust = 0.5)))
+      print(goplot(enrich_res, showCategory = showCategory) + 
+              ggtitle(paste(nm, "Goplot")) + 
+              theme(plot.title = element_text(hjust = 0.5)))
     }
     
     # cnetplot with fold changes if provided
@@ -54,8 +56,8 @@ run_enrichment <- function(
                  foldChange = fc_values,
                  layout = "circle",
                  node_label = "all") +
-          scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-          ggtitle(paste(nm, "Cnetplot")) + theme(plot.title = element_text(hjust = 0.5))
+          ggtitle(paste(nm, "Cnetplot")) + 
+          theme(plot.title = element_text(hjust = 0.5))
       )
     }
     
