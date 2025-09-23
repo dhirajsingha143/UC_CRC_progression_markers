@@ -80,6 +80,13 @@ build_ppi_network <- function(deg_out,
     distinct(from, to, .keep_all = TRUE)
   message(nrow(interactions_clean), " interactions retrieved")
 
+  # save mapped genes and interactions
+  if (save) {
+    write.csv(mapped_df, file.path(out_dir, paste0("mapped_genes_", condition, "_", regulation, ".csv")), row.names = FALSE)
+    write.csv(interactions_clean, file.path(out_dir, paste0("interactions_", condition, "_", regulation, ".csv")), row.names = FALSE)
+    message("Saved mapped genes and interactions to ", out_dir)
+  }
+  
   # Build graph object
   message("Constructing network graph...")
   g <- graph_from_data_frame(interactions_clean, directed = FALSE)
