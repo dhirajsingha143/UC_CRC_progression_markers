@@ -20,6 +20,8 @@ BiocManager::install("colorRamp2")
 BiocManager::install("ggVennDiagram")
 BiocManager::install("hpar")
 BiocManager::install("pheatmap")
+BiocManager::install("ggpubr")
+install.packages("ggalluvial")
 
 # load packages
 library(GEOquery)
@@ -28,6 +30,7 @@ library(biomaRt)
 library(tibble)
 library(reshape2)
 library(ggplot2)
+library(ggpubr)
 library(limma)
 library(ggforce)
 library(ggrepel)
@@ -42,6 +45,7 @@ library(colorRamp2)
 library(ggVennDiagram)
 library(hpar)
 library(pheatmap)
+library(ggalluvial)
 
 
 # GEO data set load local downloaded files
@@ -67,14 +71,14 @@ meta1$title <- make.names(meta1$title)
 meta1_clean <- meta1 %>% 
   dplyr::select(1,32) %>% 
   dplyr::rename(condition = colnames(meta1)[32]) %>%
+  dplyr::filter(!grepl("ulcerative.colitis.associated.dysplasia",condition)) %>% 
   dplyr::mutate(condition = gsub("left.sided.coltis","LSC",condition)) %>% 
   dplyr::mutate(condition = gsub("pancolitis","PC",condition)) %>% 
-  dplyr::mutate(condition = gsub("ulcerative.colitis.associated.dysplasia","UCD",condition)) %>% 
   dplyr::mutate(condition = gsub("control","HC",condition)) %>% 
   dplyr::mutate(title = gsub(".\\d+$","",title)) %>% 
   dplyr::mutate(batch = "1")
 
-group1 <- factor(meta1_clean$condition, levels = c("HC","LSC","PC","UCD"))
+group1 <- factor(meta1_clean$condition, levels = c("HC","LSC","PC"))
 
 #meta2
 meta2$`tissue:ch1` <- make.names(meta2$`tissue:ch1`)
@@ -167,7 +171,7 @@ integrated_expr_data <- cbind(
 ## integrated meta data
 integrated_meta_data <- rbind(meta1_clean, meta2_clean)
 
-group_meta_data <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
+group_meta_data <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","CRC"))
 
 integrated_meta_data <- integrated_meta_data[order(group_meta_data),]
 
@@ -225,7 +229,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "LSC","PC","UCD","CRC")
+  levels = c("HC", "LSC","PC","CRC")
 )
 
 
@@ -239,7 +243,6 @@ raw_exp_boxplot <- ggplot(final_melted_data,
       "HC"  = "gray",
       "LSC" = "green",
       "PC"  = "purple",
-      "UCD"  = "orange",
       "CRC" = "blue"
     )
   ) +
@@ -256,7 +259,6 @@ raw_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = con
       "HC"  = "gray",
       "LSC" = "green",
       "PC"  = "purple",
-      "UCD"  = "orange",
       "CRC" = "blue"
     )
   )
@@ -266,7 +268,7 @@ raw_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = con
 pca <- prcomp(t(integrated_expr_data), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","CRC"))
 pca_df$batch <- integrated_meta_data$batch
 
 raw_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
@@ -309,7 +311,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "LSC","PC","UCD","CRC")
+  levels = c("HC", "LSC","PC","CRC")
 )
 
 # Create the box plot
@@ -322,12 +324,11 @@ normalized_exp_boxplot <- ggplot(final_melted_data,
       "HC"  = "gray",
       "LSC" = "green",
       "PC"  = "purple",
-      "UCD"  = "orange",
       "CRC" = "yellow"
     )
   ) +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5, size = 6)) +
-  labs(x = "Sample", y = "Expression", title = "Raw expression data")
+  labs(x = "Sample", y = "Expression", title = "Normalized expression data")
 
 normalized_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = condition)) +
   geom_density(alpha = 0.4) +
@@ -339,7 +340,6 @@ normalized_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fil
       "HC"  = "gray",
       "LSC" = "green",
       "PC"  = "purple",
-      "UCD"  = "orange",
       "CRC" = "yellow"
     )
   )
@@ -348,7 +348,7 @@ normalized_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fil
 pca <- prcomp(t(normalized_expr_data), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","CRC"))
 pca_df$batch <- integrated_meta_data$batch
 
 normalized_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Group, shape = batch)) +
@@ -394,7 +394,7 @@ final_melted_data$sample_id <- factor(final_melted_data$sample_id, levels = col_
 # Define condition order
 final_melted_data$condition <- factor(
   final_melted_data$condition,
-  levels = c("HC", "LSC","PC","UCD","CRC")
+  levels = c("HC", "LSC","PC","CRC")
 )
 
 # Create the box plot
@@ -407,7 +407,6 @@ batch_corrected_exp_boxplot <- ggplot(final_melted_data,
       "HC"  = "gray",
       "LSC" = "green",
       "PC"  = "purple",
-      "UCD"  = "orange",
       "CRC" = "yellow"
     )
   ) +
@@ -424,7 +423,6 @@ batch_corrected_exp_density_plot <- ggplot(final_melted_data, aes(x = expression
       "HC"  = "gray",
       "LSC" = "green",
       "PC"  = "purple",
-      "UCD"  = "orange",
       "CRC" = "yellow"
     )
   )
@@ -434,7 +432,7 @@ batch_corrected_exp_density_plot <- ggplot(final_melted_data, aes(x = expression
 pca <- prcomp(t(batch_corrected_expr), scale. = TRUE)
 
 pca_df <- as.data.frame(pca$x)
-pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
+pca_df$Group <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","CRC"))
 pca_df$batch <- integrated_meta_data$batch
 
 
@@ -445,7 +443,18 @@ batch_corrected_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Gro
   ggtitle("PCA of Batch Corrected Expression Data") +
   theme(plot.title = element_text(hjust = 0.5))
 
+#-------------------------------------------------------------------------------
+# Saving plots function
 
+# Save the plot as PDF
+ggsave(
+  filename = "results/Pre_processing/Batch_corrected/batch_corrected_exp_pca_plot.pdf",
+  plot =  batch_corrected_exp_pca_plot,
+  width = 10,   # adjust width in inches
+  height = 6    # adjust height in inches
+)
+
+#-------------------------------------------------------------------------------
 #---Differential expression identification----
 # Load the DEG functions
 source("scripts/deg_functions.R")
@@ -455,10 +464,10 @@ source("scripts/deg_functions.R")
 custom_contrasts <- c(
   "LSC_vs_HC   = LSC - HC",       # Cumulative Contrast (exp deviation from HC as disease accumulates) 
   "PC_vs_HC    = PC  - HC",       # helps identify early vs late markers
-  "UCD_vs_HC    = UCD  - HC",   
   "CRC_vs_HC   = CRC - HC"
 )
 
+# Set-wd() to save results/DEG
 
 # Run DEG analysis with custom contrasts
 deg_out <- run_deg_analysis(
@@ -470,21 +479,18 @@ deg_out <- run_deg_analysis(
   contrasts_list = custom_contrasts
 )
 
-
---------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
 # Get Gene Symbols of DEGs-regulations
 
 # HC contrast
 # for up reg
 genes_up_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$up$Gene
 genes_up_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$up$Gene
-genes_up_UCD <- deg_out$`UCD_vs_HC    = UCD  - HC`$up$Gene
 genes_up_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$up$Gene
 
 # for down reg
 genes_down_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$down$Gene
 genes_down_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$down$Gene
-genes_down_UCD <- deg_out$`UCD_vs_HC    = UCD  - HC`$down$Gene
 genes_down_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$down$Gene
 
 --------------------------------------------------------------------------------
@@ -492,7 +498,6 @@ genes_down_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$down$Gene
 
 # Connect to Ensembl
 ensembl <- useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
-
 
 get_entrez <- function(gene_list) {
   getBM(
@@ -509,28 +514,34 @@ get_entrez <- function(gene_list) {
 # for Up-reg
 annot_up_LSC <- get_entrez(genes_up_LSC)
 annot_up_PC <- get_entrez(genes_up_PC)
-annot_up_UCD <- get_entrez(genes_up_UCD)
 annot_up_CRC <- get_entrez(genes_up_CRC)
 
 # for Down-reg
 annot_down_LSC <- get_entrez(genes_down_LSC)
 annot_down_PC <- get_entrez(genes_down_PC)
-annot_down_UCD <- get_entrez(genes_down_UCD)
 annot_down_CRC <- get_entrez(genes_down_CRC)
 
 #---Enrichment Analysis (GO/KEGG/Reactome)----
 # UP DEG table entreze id annotated
 annot_up_LSC <- inner_join(annot_up_LSC, deg_out$`LSC_vs_HC   = LSC - HC`$up, by = c("external_gene_name" = "Gene"))
 annot_up_PC <- inner_join(annot_up_PC, deg_out$`PC_vs_HC    = PC  - HC`$up, by = c("external_gene_name" = "Gene"))
-annot_up_UCD <- inner_join(annot_up_UCD, deg_out$`UCD_vs_HC    = UCD  - HC`$up, by = c("external_gene_name" = "Gene"))
 annot_up_CRC <- inner_join(annot_up_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$up, by = c("external_gene_name" = "Gene"))
 
 # DOWN DEG table entreze id annotated
 annot_down_LSC <- inner_join(annot_down_LSC, deg_out$`LSC_vs_HC   = LSC - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_PC <- inner_join(annot_down_PC, deg_out$`PC_vs_HC    = PC  - HC`$down, by = c("external_gene_name" = "Gene"))
-annot_down_UCD <- inner_join(annot_down_UCD, deg_out$`UCD_vs_HC    = UCD  - HC`$down, by = c("external_gene_name" = "Gene"))
 annot_down_CRC <- inner_join(annot_down_CRC, deg_out$`CRC_vs_HC   = CRC - HC`$down, by = c("external_gene_name" = "Gene"))
 
+# saving inputs for enrichment
+dir.create("results/Enrichment/Input/UP", recursive = TRUE)
+dir.create("results/Enrichment/Input/DOWN", recursive = TRUE)
+
+write.csv(annot_up_LSC, "results/Enrichment/Input/UP/annot_up_LSC.csv", row.names = FALSE)
+write.csv(annot_down_LSC, "results/Enrichment/Input/DOWN/annot_down_LSC.csv", row.names = FALSE)
+write.csv(annot_up_PC, "results/Enrichment/Input/UP/annot_up_PC.csv", row.names = FALSE)
+write.csv(annot_down_PC, "results/Enrichment/Input/DOWN/annot_down_PC.csv", row.names = FALSE)
+write.csv(annot_up_CRC, "results/Enrichment/Input/UP/annot_up_CRC.csv", row.names = FALSE)
+write.csv(annot_down_CRC, "results/Enrichment/Input/DOWN/annot_down_CRC.csv", row.names = FALSE)
 
 source("scripts/enrichment.R")
 #-------------------------------------------------------------------------------
@@ -542,7 +553,7 @@ res <- run_enrichment(
   gene_list  = annot_up_LSC$entrezgene_id,  # Entrez IDs of DEGs table
   fc_values  = fc_values,                   # gene vector of logFC values
   prefix     = "LSC_vs_HC_up",              # File naming prefix
-  outdir     = "results/LSC_vs_HC/Enrichment/UP",      # dir name
+  outdir     = "results/Enrichment/LSC_vs_HC/UP",      # dir name
   showCategory = 15,
   save_tables = TRUE
 )
@@ -555,7 +566,7 @@ res <- run_enrichment(
   gene_list  = annot_down_LSC$entrezgene_id,
   fc_values  = fc_values,                     
   prefix     = "LSC_vs_HC_down",              
-  outdir     = "results/LSC_vs_HC/Enrichment/DOWN",      
+  outdir     = "results/Enrichment/LSC_vs_HC/DOWN",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -568,7 +579,7 @@ res <- run_enrichment(
   gene_list  = annot_up_PC$entrezgene_id,  
   fc_values  = fc_values,                   
   prefix     = "PC_vs_HC_up",              
-  outdir     = "results/PC_vs_HC/Enrichment/UP",      
+  outdir     = "results/Enrichment/PC_vs_HC/UP",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -581,33 +592,7 @@ res <- run_enrichment(
   gene_list  = annot_down_PC$entrezgene_id,
   fc_values  = fc_values,                     
   prefix     = "PC_vs_HC_down",              
-  outdir     = "results/PC_vs_HC/Enrichment/DOWN",      
-  showCategory = 15,
-  save_tables = TRUE
-)
-
-# UP genes UCD
-fc_values <- annot_up_UCD$logFC
-names(fc_values) <- annot_up_UCD$external_gene_name
-
-res <- run_enrichment(
-  gene_list  = annot_up_UCD$entrezgene_id,  
-  fc_values  = fc_values,                   
-  prefix     = "UCD_vs_HC_up",              
-  outdir     = "results/UCD_vs_HC/Enrichment/UP",      
-  showCategory = 15,
-  save_tables = TRUE
-)
-
-# DOWN genes UCD
-fc_values <- annot_down_UCD$logFC
-names(fc_values) <- annot_down_UCD$external_gene_name
-
-res <- run_enrichment(
-  gene_list  = annot_down_UCD$entrezgene_id,
-  fc_values  = fc_values,                     
-  prefix     = "UCD_vs_HC_down",              
-  outdir     = "results/UCD_vs_HC/Enrichment/DOWN",      
+  outdir     = "results/Enrichment/PC_vs_HC/DOWN",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -620,7 +605,7 @@ res <- run_enrichment(
   gene_list  = annot_up_CRC$entrezgene_id,  
   fc_values  = fc_values,                   
   prefix     = "CRC_vs_HC_up",              
-  outdir     = "results/CRC_vs_HC/Enrichment/UP",      
+  outdir     = "results/Enrichment/CRC_vs_HC/UP",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -633,7 +618,7 @@ res <- run_enrichment(
   gene_list  = annot_down_CRC$entrezgene_id,
   fc_values  = fc_values,                     
   prefix     = "CRC_vs_HC_down",              
-  outdir     = "results/CRC_vs_HC/Enrichment/DOWN",      
+  outdir     = "results/Enrichment/CRC_vs_HC/DOWN",      
   showCategory = 15,
   save_tables = TRUE
 )
@@ -647,20 +632,11 @@ top_genes <- unique(c(
   annot_down_LSC$external_gene_name,
   annot_up_PC$external_gene_name,
   annot_down_PC$external_gene_name,
-  annot_up_UCD$external_gene_name,
-  annot_down_UCD$external_gene_name,
   annot_up_CRC$external_gene_name,
   annot_down_CRC$external_gene_name
 ))
 
 heat_expr_mat <- integrated_expr_data[top_genes, ]
-
-#rownames(gene_row_group) <- gene_row_group$gene
-
-# Arrange samples by disease then batch
-sample_order <- integrated_meta_data %>%
-  arrange(condition, batch) %>%
-  rownames()
 
 # Reorder expression matrix
 heat_expr_mat <- heat_expr_mat[, integrated_meta_data$sample_id]
@@ -677,7 +653,6 @@ col_ha <- HeatmapAnnotation(
       "HC"  = "gray",
       "LSC" = "green",
       "PC"  = "purple",
-      "UCD"  = "orange",
       "CRC" = "yellow"
     ),
     Batch = c("1" = "salmon", "2" = "gold", "3" = "lightblue")
@@ -720,8 +695,8 @@ network_LSC_vs_HC_up <- build_ppi_network(
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
-  save = FALSE,
-  out_dir = "results/LSC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/LSC_vs_HC/UP",
   return_plot = TRUE
 )
 
@@ -730,8 +705,8 @@ hubs_LSC_vs_HC_up <- identify_hub_genes(
   g = network_LSC_vs_HC_up$graph,
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "up",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/LSC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/LSC_vs_HC/UP",
   return_plot = TRUE
 )
 
@@ -740,8 +715,8 @@ modules_LSC_vs_HC_up <- detect_ppi_modules(
   g = network_LSC_vs_HC_up$graph,
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "up", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/LSC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/LSC_vs_HC/UP",
   return_plot = TRUE
 )
 
@@ -753,8 +728,8 @@ network_LSC_vs_HC_down <- build_ppi_network(
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
-  save = FALSE,
-  out_dir = "results/LSC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/LSC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
@@ -763,8 +738,8 @@ hubs_LSC_vs_HC_down <- identify_hub_genes(
   g = network_LSC_vs_HC_down$graph,
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "down",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/LSC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/LSC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
@@ -773,8 +748,8 @@ modules_LSC_vs_HC_down <- detect_ppi_modules(
   g = network_LSC_vs_HC_down$graph,
   condition = "LSC_vs_HC   = LSC - HC",
   regulation = "down", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/LSC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/LSC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
@@ -790,8 +765,8 @@ network_PC_vs_HC_up <- build_ppi_network(
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
-  save = FALSE,
-  out_dir = "results/PC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/PC_vs_HC/UP",
   return_plot = TRUE
 )
 
@@ -800,8 +775,8 @@ hubs_PC_vs_HC_up <- identify_hub_genes(
   g = network_PC_vs_HC_up$graph,
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "up",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/PC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/PC_vs_HC/UP",
   return_plot = TRUE
 )
 
@@ -810,12 +785,12 @@ modules_PC_vs_HC_up <- detect_ppi_modules(
   g = network_PC_vs_HC_up$graph,
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "up", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/PC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/PC_vs_HC/UP",
   return_plot = TRUE
 )
 
-## down-regulation _pending processing
+## down-regulation 
 
 # Building PPI network
 network_PC_vs_HC_down <- build_ppi_network(
@@ -823,8 +798,8 @@ network_PC_vs_HC_down <- build_ppi_network(
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
-  save = FALSE,
-  out_dir = "results/PC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/PC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
@@ -833,8 +808,8 @@ hubs_PC_vs_HC_down <- identify_hub_genes(
   g = network_PC_vs_HC_down$graph,
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "down",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/PC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/PC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
@@ -843,80 +818,11 @@ modules_PC_vs_HC_down <- detect_ppi_modules(
   g = network_PC_vs_HC_down$graph,
   condition = "PC_vs_HC    = PC  - HC",
   regulation = "down", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/PC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/PC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
-
-#===PPI > UCD_vs_HC====
-# Process Multiple Regulation per contrasts matrix
-
-## up-regulation
-
-# Building PPI network
-network_UCD_vs_HC_up <- build_ppi_network(
-  deg_out = deg_out,
-  condition = "UCD_vs_HC    = UCD  - HC",
-  regulation = "up",  # Options: "up" , "down"
-  top_n = 100,
-  save = FALSE,
-  out_dir = "results/UCD_vs_HC/PPI/UP",
-  return_plot = TRUE
-)
-
-# Identify hub genes
-hubs_UCD_vs_HC_up <- identify_hub_genes(
-  g = network_UCD_vs_HC_up$graph,
-  condition = "UCD_vs_HC    = UCD  - HC",
-  regulation = "up",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/UCD_vs_HC/PPI/UP",
-  return_plot = TRUE
-)
-
-# Detect modules
-modules_UCD_vs_HC_up <- detect_ppi_modules(
-  g = network_UCD_vs_HC_up$graph,
-  condition = "UCD_vs_HC    = UCD  - HC",
-  regulation = "up", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/UCD_vs_HC/PPI/UP",
-  return_plot = TRUE
-)
-
-## down-regulation
-
-# Building PPI network
-network_UCD_vs_HC_down <- build_ppi_network(
-  deg_out = deg_out,
-  condition = "UCD_vs_HC    = UCD  - HC",
-  regulation = "down",  # Options: "up" , "down"
-  top_n = 100,
-  save = FALSE,
-  out_dir = "results/UCD_vs_HC/PPI/DOWN",
-  return_plot = TRUE
-)
-
-# Identify hub genes
-hubs_UCD_vs_HC_down <- identify_hub_genes(
-  g = network_UCD_vs_HC_down$graph,
-  condition = "UCD_vs_HC    = UCD  - HC",
-  regulation = "down",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/UCD_vs_HC/PPI/DOWN",
-  return_plot = TRUE
-)
-
-# Detect modules
-modules_UCD_vs_HC_down <- detect_ppi_modules(
-  g = network_UCD_vs_HC_down$graph,
-  condition = "UCD_vs_HC    = UCD  - HC",
-  regulation = "down", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/UCD_vs_HC/PPI/DOWN",
-  return_plot = TRUE
-)
 
 #===PPI > CRC_vs_HC====
 
@@ -928,8 +834,8 @@ network_CRC_vs_HC_up <- build_ppi_network(
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "up",  # Options: "up" , "down"
   top_n = 100,
-  save = FALSE,
-  out_dir = "results/CRC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/CRC_vs_HC/UP",
   return_plot = TRUE
 )
 
@@ -938,8 +844,8 @@ hubs_CRC_vs_HC_up <- identify_hub_genes(
   g = network_CRC_vs_HC_up$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "up",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/CRC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/CRC_vs_HC/UP",
   return_plot = TRUE
 )
 
@@ -948,8 +854,8 @@ modules_CRC_vs_HC_up <- detect_ppi_modules(
   g = network_CRC_vs_HC_up$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "up", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/CRC_vs_HC/PPI/UP",
+  save = TRUE,
+  out_dir = "results/PPI/CRC_vs_HC/UP",
   return_plot = TRUE
 )
 
@@ -961,8 +867,8 @@ network_CRC_vs_HC_down <- build_ppi_network(
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "down",  # Options: "up" , "down"
   top_n = 100,
-  save = FALSE,
-  out_dir = "results/CRC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/CRC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
@@ -971,8 +877,8 @@ hubs_CRC_vs_HC_down <- identify_hub_genes(
   g = network_CRC_vs_HC_down$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "down",  # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/CRC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/CRC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
@@ -981,31 +887,28 @@ modules_CRC_vs_HC_down <- detect_ppi_modules(
   g = network_CRC_vs_HC_down$graph,
   condition = "CRC_vs_HC   = CRC - HC",
   regulation = "down", # Options: "up" , "down"
-  save = FALSE,
-  out_dir = "results/CRC_vs_HC/PPI/DOWN",
+  save = TRUE,
+  out_dir = "results/PPI/CRC_vs_HC/DOWN",
   return_plot = TRUE
 )
 
 # Define hub gene list
 
-hub_genes <- list(
+hub_genes_all <- list(
   LSC <- unique(c(hubs_LSC_vs_HC_up$hub_df$Gene_Symbol,hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
   PC <- unique(c(hubs_PC_vs_HC_up$hub_df$Gene_Symbol,hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
-  UCD <- unique(c(hubs_UCD_vs_HC_up$hub_df$Gene_Symbol,hubs_UCD_vs_HC_down$hub_df$Gene_Symbol)),
   CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol,hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
 )
 
-hub_genes <- list(
+hub_genes_up <- list(
   LSC <- unique(c(hubs_LSC_vs_HC_up$hub_df$Gene_Symbol)),
   PC <- unique(c(hubs_PC_vs_HC_up$hub_df$Gene_Symbol)),
-  UCD <- unique(c(hubs_UCD_vs_HC_up$hub_df$Gene_Symbol)),
   CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol))
 )
 
-hub_genes <- list(
+hub_genes_down <- list(
   LSC <- unique(c(hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
   PC <- unique(c(hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
-  UCD <- unique(c(hubs_UCD_vs_HC_down$hub_df$Gene_Symbol)),
   CRC <- unique(c(hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
 )
 
@@ -1015,7 +918,6 @@ hub_genes <- list(
 top_genes <- unique(c(
   LSC,
   PC,
-  UCD,
   CRC
 ))
 
@@ -1036,7 +938,6 @@ col_ha <- HeatmapAnnotation(
       "HC"  = "gray",
       "LSC" = "green",
       "PC"  = "purple",
-      "UCD"  = "orange",
       "CRC" = "yellow"
     ),
     Batch = c("1" = "salmon", "2" = "gold", "3" = "lightblue")
@@ -1068,7 +969,6 @@ Heatmap(
 venn_list <- list(
   LSC = LSC,
   PC = PC,
-  UCD = UCD,
   CRC = CRC
 )
 
@@ -1086,22 +986,12 @@ PC_CRC <- intersect(PC, CRC)
 
 UC <- intersect(LSC_PC, PC_CRC)
 
-UC_CRC <- intersect(UC, CRC) # early to CRC common significantly hub markers
+UC_CRC <- intersect(UC, CRC) # UC to CRC common significantly hub markers
 
-
-
-# > LSC_PC
-# [1] "IL1B"    "CXCL8"   "MMP9"    "CXCL1"   "LCN2"    "CXCL2"   "CXCR2"   "CXCL13"  "CXCL5"   "S100A12" "CXCL11"  "MMP1"    "CCL18"  
-# [14] "CXCL3" 
-# > LSC_CRC
-# [1] "IL1B"   "CXCL8"  "CXCL1"  "LCN2"   "CXCL5"  "CXCL9"  "CXCL11" "MMP1" 
-#> PC_CRC
-# [1] "IL1B"   "CXCL8"  "LCN2"   "CXCL1"  "CXCL5"  "MMP3"   "MMP1"   "CXCL11"
-----------------------------------------------------------------------------
-# > UC_CRC
-# [1] "IL1B"   "CXCL8"  "CXCL1"  "LCN2"   "CXCL5"  "CXCL11" "MMP1" 
-
-# Enrichment of Common hub genes between Stages for shared pathway identification
+LC_CRC <- intersect(LSC, CRC) # early UC to CRC common significantly hub markers
+# LC_CRC  7 common genes and direct 3 genes (CXCL9,NR1H4,UGT1A1)
+PC_CRC <- intersect(PC, CRC) # late UC to CRC common significantly hub markers
+# MMP3 and MS4A12 uniques and common 7 genes
 
 # annotations of common genes to entrenz id
 
@@ -1118,15 +1008,13 @@ UC_CRC_annot <- get_entrez(UC_CRC)
 
 source("scripts/enrichment.R")
 #-------------------------------------------------------------------------------
-# UP HUB genes Common UC to CRC
-fc_values <- annot_up_LSC$logFC
-names(fc_values) <- annot_up_LSC$external_gene_name   # make sure IDs match enrichment
+# UP HUB genes Common UC to CRC Enrichment
 
 res <- run_enrichment(
   gene_list  = UC_CRC_annot$entrezgene_id,  # Entrez IDs of DEGs table
   fc_values  = NULL,                   # gene vector of logFC values
-  prefix     = "UC_vs_CRC_HUB_up",              # File naming prefix
-  outdir     = "results/UC_vs_CRC_HUB/Enrichment/UP",      # dir name
+  prefix     = "UC_to_CRC_HUB_up",              # File naming prefix
+  outdir     = "results/UC_to_CRC_HUB/HUB_Enrichment",      # dir name
   showCategory = 15,
   save_tables = TRUE
 )
@@ -1138,10 +1026,10 @@ res <- run_enrichment(
 # Define pairwise comparisons (optional)
 
 my_comparisons <- list(
-  c("HC", "LSC"), c("HC", "PC"), c("HC", "UCD"), c("HC", "CRC")
+  c("HC", "LSC"), c("HC", "PC"), c("HC", "CRC")
 )
 
-gene_id <- "CCL18"
+gene_id <- "MS4A12"
 title <- NULL
 
 
@@ -1163,14 +1051,22 @@ p <- ggboxplot(plot_df, x = "group", y = "expr", fill = "group",
   ) +
   theme_bw(base_size = 13) + stat_compare_means(comparisons = my_comparisons, method = "wilcox.test", label = "p.signif", hide.ns = TRUE)
 
+#save plot
+ggsave(
+  filename = paste0("results/UC_to_CRC_HUB/Boxplots/", gene_id, "_boxplot_PC_to_CRC_down.pdf"),
+  plot = p,
+  width = 10,   # adjust width in inches
+  height = 6    # adjust height in inches
+)
 
+
+-----------------------------------------------------------------
 # Validation with HPA db
-
+---------------------------------------------------------------
 # Install required packages if not already installed
 
-
 # Example hub gene list
-hub_genes <- c("IL1B", "CXCL8", "CXCL1", "LCN2", "CXCL5", "CXCL11", "MMP1")  # replace with your genes
+hub_genes <- c("CXCL1", "CXCL5", "CXCL8", "CXCL9", "CXCL11", "IL1B", "LCN2","MMP1","MMP3","NR1H4","UGT1A1","MS4A12")  # replace with your genes
 
 # Load all HPA pathology data
 hpa_data <- allHparData()    # this contain all the data from HPA
@@ -1196,44 +1092,18 @@ hub_summary
 
 --------------------------------------------------------------------------------
 # Visualization
-ggplot(hub_in_crc, aes(x = Gene.name, y = Count.patients, fill = Level)) +
-  geom_bar(stat = "identity", position = "fill") +
-  scale_fill_manual(values = c("Not detected"="grey80",
-                               "Low"="skyblue",
-                               "Medium"="orange",
-                               "High"="red")) +
-  theme_minimal(base_size = 14) +
-  labs(title = "Hub Gene Expression in Colorectal Cancer (HPA)",
-       y = "Proportion of Patients", x = "Genes") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# ggplot(hub_in_crc, aes(x = Gene.name, y = Count.patients, fill = Level)) +
+#   geom_bar(stat = "identity", position = "fill") +
+#   scale_fill_manual(values = c("Not detected"="grey80",
+#                                "Low"="skyblue",
+#                                "Medium"="orange",
+#                                "High"="red")) +
+#   theme_minimal(base_size = 14) +
+#   labs(title = "Hub Gene Expression in Colorectal Cancer (HPA)",
+#        y = "Proportion of Patients", x = "Genes") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-heat_mat <- hub_summary %>%
-  tibble::column_to_rownames("Gene.name") %>%
-  dplyr::select(High, Medium, Low, `Not detected`) %>%
-  as.matrix()
-
-pheatmap(heat_mat,
-         cluster_rows = FALSE,
-         cluster_cols = FALSE,
-         color = colorRampPalette(c("grey95","skyblue","orange","red"))(50),
-         main = "HPA Colorectal Cancer: Hub Genes (Patient Counts)",
-         fontsize = 12)
-
-ggplot(hub_in_crc, aes(x = Gene.name, y = Count.patients, fill = Level)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  scale_fill_manual(values = c("Not detected"="grey80",
-                               "Low"="skyblue",
-                               "Medium"="orange",
-                               "High"="red")) +
-  theme_minimal(base_size = 14) +
-  labs(title = "Hub Genes: Patient Counts by Expression Level (HPA CRC)",
-       y = "Number of Patients", x = "Genes") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-install.packages("ggalluvial")
-library(ggalluvial)
-
-ggplot(hub_in_crc,
+hub_genes_hpa_cancerdb <- ggplot(hub_in_crc,
        aes(axis1 = Gene.name, axis2 = Level, y = Count.patients)) +
   geom_alluvium(aes(fill = Level), width = 1/12) +
   geom_stratum(width = 1/12, fill = "grey90", color = "grey40") +
@@ -1242,9 +1112,11 @@ ggplot(hub_in_crc,
                                "Low"="skyblue",
                                "Medium"="orange",
                                "High"="red")) +
-  theme_minimal(base_size = 14) +
+  theme_minimal(base_size = 10) +
   labs(title = "Hub Genes – Patient Distribution (HPA CRC)",
        y = "Patient Counts", x = "")
+
+
 --------------------------------------------------------------------------------
 
 # Expression in normal tissues
@@ -1260,24 +1132,33 @@ filter(str_detect(Tissue, "colon|rectum|colorectal"))
 normal_tissue <- common_hub_genes %>%
 filter(Gene.name %in% hub_genes)
 
-ggplot(normal_tissue, aes(x = Gene.name, fill = Level)) +
-  geom_bar(position = "fill") +
+# ggplot(normal_tissue, aes(x = Gene.name, fill = Level)) +
+#   geom_bar(position = "fill") +
+#   scale_fill_manual(values = c("Not detected"="grey80",
+#                                "Low"="skyblue",
+#                                "Medium"="orange",
+#                                "High"="red")) +
+#   theme_minimal(base_size = 14) +
+#   labs(title = "Hub Gene Expression in Normal Colon/Rectum (HPA v16.1)",
+#        y = "Proportion of Cell Types", x = "Genes") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot_data <- normal_tissue %>%
+  count(Gene.name, Level, name = "Count.patients")
+
+# Alluvial plot
+hub_genes_HPA_NormalTdb <- ggplot(plot_data,
+       aes(axis1 = Gene.name, axis2 = Level, y = Count.patients)) +
+  geom_alluvium(aes(fill = Level), width = 1/12) +
+  geom_stratum(width = 1/12, fill = "grey90", color = "grey40") +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   scale_fill_manual(values = c("Not detected"="grey80",
                                "Low"="skyblue",
                                "Medium"="orange",
                                "High"="red")) +
-  theme_minimal(base_size = 14) +
-  labs(title = "Hub Gene Expression in Normal Colon/Rectum (HPA v16.1)",
-       y = "Proportion of Cell Types", x = "Genes") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-# summary
-
-hub_summary <- hub_in_crc %>%
-  dplyr::select(Gene.name, Level, Count.patients, Total.patients) %>%
-  tidyr::pivot_wider(names_from = Level, values_from = Count.patients, values_fill = 0)
-
-hub_summary
+  theme_minimal(base_size = 10) +
+  labs(title = "Hub Genes – Patient Distribution (HPA Normal Tissue)",
+       y = "Patient Counts", x = "")
 
 
 # rnaGtexTissue Normal RNA-seq, healthy colon/rectum samples
@@ -1292,15 +1173,7 @@ common_hub_genes_rna <- normal_rna_types %>%
 normal_rna_tissue <- common_hub_genes_rna %>%
   filter(Gene.name %in% hub_genes)
 
-
-ggplot(normal_rna_tissue, aes(x = Gene.name, y = TPM, fill = Gene.name)) +
-  geom_col(width = 0.7, alpha = 0.8, show.legend = FALSE) +
-  geom_text(aes(label = round(TPM,1)), vjust = -0.5, size = 4) +
-  theme_minimal(base_size = 14) +
-  labs(title = "Hub Gene Expression in Normal Colon (RNA-seq, TPM)",
-       x = "Genes", y = "TPM")
-
-ggplot(normal_rna_tissue, aes(x = reorder(Gene.name, TPM), y = TPM)) +
+hub_genes_rnaGeneTbd <- ggplot(normal_rna_tissue, aes(x = reorder(Gene.name, TPM), y = TPM)) +
   geom_segment(aes(xend = Gene.name, y = 0, yend = TPM), color = "grey60") +
   geom_point(size = 6, color = "firebrick") +
   geom_text(aes(label = round(TPM,1)), hjust = -0.3, size = 4) +
@@ -1309,45 +1182,14 @@ ggplot(normal_rna_tissue, aes(x = reorder(Gene.name, TPM), y = TPM)) +
   labs(title = "Hub Genes Ranked by Expression in Colon (TPM)",
        x = "Genes", y = "TPM")
 
-#comparison
+#Saving plots
 --------------------------------------------------------------------------------
-# Prepare cancer data (assuming hub_in_crc already exists)
-  cancer_plot <- hub_in_crc %>%
-  mutate(Source = "Cancer") %>%
-  select(Gene.name, Level, Source, Count.patients)
+ggsave(
+  filename = paste0("results/HPAdb/", "vhub_genes_rnaGeneTbd.pdf"),
+  plot = hub_genes_rnaGeneTbd,
+  width = 12,   # adjust width in inches
+  height =  6   # adjust height in inches
+)
 
-# Prepare normal data
-normal_plot <- normal_tissue %>%
-  mutate(Source = "Normal",
-         Count.patients = 1) %>%   # each row = one sample (cell type), so weight = 1
-  select(Gene.name, Level, Source, Count.patients)
-
-# Combine
-combined_plot <- bind_rows(cancer_plot, normal_plot)
-
-ggplot(combined_plot, aes(x = Gene.name, fill = Level, weight = Count.patients)) +
-  geom_bar(position = "fill") +
-  facet_wrap(~Source) +
-  scale_fill_manual(values = c("Not detected"="grey80",
-                               "Low"="skyblue",
-                               "Medium"="orange",
-                               "High"="red")) +
-  theme_minimal(base_size = 14) +
-  labs(title = "Hub Genes Expression: Cancer vs Normal (HPA v16.1)",
-       y = "Proportion", x = "Genes") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-# Construct the full path to the lock directory
-lock_dir <- "G:/My Drive/AUUP/L319/Dhiraj/R_Projects_sync/UC_CRC_progression_markers/renv/library/windows/R-4.5/x86_64-w64-mingw32/00LOCK"
-
-# Check if the directory exists before trying to delete it
-if (dir.exists(lock_dir)) {
-  # Use unlink() to remove the directory and its contents
-  unlink(lock_dir, recursive = TRUE)
-  print("Lock directory removed. You can now try to install the package again.")
-} else {
-  print("No lock directory found.")
-}
 
 
