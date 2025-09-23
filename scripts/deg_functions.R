@@ -18,10 +18,8 @@ library(ggrepel)
 # DEG analysis function
   run_deg_analysis <- function(expr_data, meta_data, condition_col = "disease", logfc_threshold = 2, pval_threshold = 0.05, contrasts_list = NULL) {
 
-  # load library
-  message("\n loaded librarys: limma, tibble, dplyr, ggplot2, ggrepel")
-
-  #message("\n🔍 Running DEG Analysis ...\n🛠 log_expr_data and norm_expr_data performed as default")
+  
+  message("\n🔍 Running DEG Analysis ...\n_🛠SET Working directory to save results/DEG")
 
   # Step 1: Log transformation
   #log_expr_data <- log2(expr_data + 1)
@@ -75,13 +73,13 @@ library(ggrepel)
     )
 
     # Optional: Save CSV (commented)
-    #write.csv(res, paste0(contrast_name, "_DEG_results.csv"), row.names = FALSE)
-    message("\n 📍 Currently DE-ACTIVATED saving results.CSV for testing purpose")
+    write.csv(res, paste0(contrast_name, "_DEG_results.csv"), row.names = FALSE)
+    message("\n 📍 Currently ACTIVATED saving results.CSV for testing purpose")
 
     # Optional: Volcano Plot
     p <- ggplot(res, aes(x = logFC, y = -log10(adj.P.Val))) +
       geom_point(aes(color = sig), alpha = 0.7) +
-      scale_color_manual(values = c("Down" = "#1b7837", "Up" = "#762a83", "Not Sig" = "grey")) +
+      scale_color_manual(values = c("Down" = "#1b7837", "Up" = "red", "Not Sig" = "grey")) +
       geom_hline(yintercept = -log10(pval_threshold), linetype = "dashed") +
       geom_vline(xintercept = c(-logfc_threshold, logfc_threshold), linetype = "dashed") +
       xlim(min(res$logFC), max(res$logFC)) +
@@ -89,7 +87,7 @@ library(ggrepel)
            x = "Log2 Fold Change",
            y = "-log10 Adjusted P-value") +
       theme_minimal()
-
+    
     print(p)
   }
 
