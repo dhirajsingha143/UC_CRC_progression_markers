@@ -67,14 +67,14 @@ meta1$title <- make.names(meta1$title)
 meta1_clean <- meta1 %>% 
   dplyr::select(1,32) %>% 
   dplyr::rename(condition = colnames(meta1)[32]) %>%
+  dplyr::filter(!grepl("ulcerative.colitis.associated.dysplasia",condition)) %>% 
   dplyr::mutate(condition = gsub("left.sided.coltis","LSC",condition)) %>% 
   dplyr::mutate(condition = gsub("pancolitis","PC",condition)) %>% 
-  dplyr::mutate(condition = gsub("ulcerative.colitis.associated.dysplasia","UCD",condition)) %>% 
   dplyr::mutate(condition = gsub("control","HC",condition)) %>% 
   dplyr::mutate(title = gsub(".\\d+$","",title)) %>% 
   dplyr::mutate(batch = "1")
 
-group1 <- factor(meta1_clean$condition, levels = c("HC","LSC","PC","UCD"))
+group1 <- factor(meta1_clean$condition, levels = c("HC","LSC","PC"))
 
 #meta2
 meta2$`tissue:ch1` <- make.names(meta2$`tissue:ch1`)
@@ -167,7 +167,7 @@ integrated_expr_data <- cbind(
 ## integrated meta data
 integrated_meta_data <- rbind(meta1_clean, meta2_clean)
 
-group_meta_data <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","UCD","CRC"))
+group_meta_data <- factor(integrated_meta_data$condition, levels = c("HC", "LSC","PC","CRC"))
 
 integrated_meta_data <- integrated_meta_data[order(group_meta_data),]
 
