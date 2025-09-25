@@ -583,7 +583,7 @@ res <- run_enrichment(
   fc_values  = fc_values,                   # gene vector of logFC values
   prefix     = "LSC_vs_HC_up",              # File naming prefix
   outdir     = "results/Enrichment/LSC_vs_HC/UP",      # dir name
-  showCategory = 15,
+  showCategory = 10,
   save_tables = TRUE
 )
 
@@ -596,7 +596,7 @@ res <- run_enrichment(
   fc_values  = fc_values,                     
   prefix     = "LSC_vs_HC_down",              
   outdir     = "results/Enrichment/LSC_vs_HC/DOWN",      
-  showCategory = 15,
+  showCategory = 10,
   save_tables = TRUE
 )
 
@@ -609,7 +609,7 @@ res <- run_enrichment(
   fc_values  = fc_values,                   
   prefix     = "PC_vs_HC_up",              
   outdir     = "results/Enrichment/PC_vs_HC/UP",      
-  showCategory = 15,
+  showCategory = 10,
   save_tables = TRUE
 )
 
@@ -622,7 +622,7 @@ res <- run_enrichment(
   fc_values  = fc_values,                     
   prefix     = "PC_vs_HC_down",              
   outdir     = "results/Enrichment/PC_vs_HC/DOWN",      
-  showCategory = 15,
+  showCategory = 10,
   save_tables = TRUE
 )
 
@@ -635,7 +635,7 @@ res <- run_enrichment(
   fc_values  = fc_values,                   
   prefix     = "CRC_vs_HC_up",              
   outdir     = "results/Enrichment/CRC_vs_HC/UP",      
-  showCategory = 15,
+  showCategory = 10,
   save_tables = TRUE
 )
 
@@ -648,7 +648,7 @@ res <- run_enrichment(
   fc_values  = fc_values,                     
   prefix     = "CRC_vs_HC_down",              
   outdir     = "results/Enrichment/CRC_vs_HC/DOWN",      
-  showCategory = 15,
+  showCategory = 10,
   save_tables = TRUE
 )
 
