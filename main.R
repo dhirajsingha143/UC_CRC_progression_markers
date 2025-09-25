@@ -411,7 +411,7 @@ batch_corrected_exp_boxplot <- ggplot(final_melted_data,
     )
   ) +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5, size = 6)) +
-  labs(x = "Sample", y = "Expression", title = "Raw expression data")
+  labs(x = "Sample", y = "Expression", title = "Batch Corrected expression data")
 
 batch_corrected_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = condition)) +
   geom_density(alpha = 0.4) +
