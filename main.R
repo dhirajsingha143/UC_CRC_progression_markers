@@ -384,6 +384,8 @@ colnames(melted_data) <- c("gene", "sample_id", "expression")
 # Check sample ordering ## TESTING PURPOSE ONLY
 batch_corrected_expr$gene <- NULL
 
+integrated_meta_data$sample_id <- rownames(integrated_meta_data)
+
 final_melted_data <- dplyr::left_join(melted_data, integrated_meta_data, by = "sample_id")
 
 # Check sample ordering ## TESTING PURPOSE ONLY
@@ -415,7 +417,7 @@ batch_corrected_exp_boxplot <- ggplot(final_melted_data,
 
 batch_corrected_exp_density_plot <- ggplot(final_melted_data, aes(x = expression, fill = condition)) +
   geom_density(alpha = 0.4) +
-  labs(title = "Expression Distribution of Noramlized expression data", x = "Expression", y = "Density") +
+  labs(title = "Expression Distribution of Batch corrected expression data", x = "Expression", y = "Density") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_fill_manual(
@@ -448,8 +450,8 @@ batch_corrected_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Gro
 
 # Save the plot as PDF
 ggsave(
-  filename = "results/Pre_processing/Batch_corrected/batch_corrected_exp_pca_plot.pdf",
-  plot =  batch_corrected_exp_pca_plot,
+  filename = "results/Pre_processing/Batch_corrected/batch_corrected_exp_boxplot.pdf",
+  plot =  batch_corrected_exp_boxplot,
   width = 10,   # adjust width in inches
   height = 6    # adjust height in inches
 )
@@ -492,6 +494,33 @@ genes_up_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$up$Gene
 genes_down_LSC <- deg_out$`LSC_vs_HC   = LSC - HC`$down$Gene
 genes_down_PC <-  deg_out$`PC_vs_HC    = PC  - HC`$down$Gene
 genes_down_CRC <- deg_out$`CRC_vs_HC   = CRC - HC`$down$Gene
+
+# venn diag
+# Prepare your list
+venn_list_up <- list(
+  LSC = genes_up_LSC,
+  PC = genes_up_PC,
+  CRC = genes_up_CRC
+)
+
+venn_list_down <- list(
+  LSC = genes_down_LSC,
+  PC = genes_down_PC,
+  CRC = genes_down_CRC
+)
+
+# Plot
+ggVennDiagram(venn_list_up, label_alpha = 0, label = "count") +
+  scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
+  theme_void() +
+  ggtitle("DEG Genes UP-regulated") +
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+
+ggVennDiagram(venn_list_down, label_alpha = 0, label = "count") +
+  scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
+  theme_void() +
+  ggtitle("DEG Genes Down-regulated") +
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
 
 --------------------------------------------------------------------------------
 # Fetch annotations via BiomaRt Function ---
