@@ -935,11 +935,11 @@ hub_genes_up <- list(
   CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol))
 )
 
-hub_genes_down <- list(
-  LSC <- unique(c(hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
-  PC <- unique(c(hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
-  CRC <- unique(c(hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
-)
+# hub_genes_down <- list(
+#   LSC <- unique(c(hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
+#   PC <- unique(c(hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
+#   CRC <- unique(c(hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
+# )
 
 
 #---Heat Map Generation for DEG Expressions----
@@ -1021,6 +1021,14 @@ LC_CRC <- intersect(LSC, CRC) # early UC to CRC common significantly hub markers
 # LC_CRC  7 common genes and direct 3 genes (CXCL9,NR1H4,UGT1A1)
 PC_CRC <- intersect(PC, CRC) # late UC to CRC common significantly hub markers
 # MMP3 and MS4A12 uniques and common 7 genes
+
+candidate_genes <- list(
+  Early_UC_to_CRC = LC_CRC,
+  Late_UC_to_CRC = PC_CRC,
+  All_Stages_UC_to_CRC = UC_CRC
+)
+
+markers <- unique(c(LC_CRC, PC_CRC, UC_CRC))
 
 # annotations of common genes to entrenz id
 
@@ -1109,7 +1117,7 @@ colorectal_cancer <- cancer_types %>%
 
 # filter hub genes to HPA database
 hub_in_crc <- colorectal_cancer %>%
-  filter(Gene.name %in% hub_genes)
+  filter(Gene.name %in% markers)
 
 # summary
 
@@ -1159,7 +1167,7 @@ filter(str_detect(Tissue, "colon|rectum|colorectal"))
 
 # filter hub genes to HPA database
 normal_tissue <- common_hub_genes %>%
-filter(Gene.name %in% hub_genes)
+filter(Gene.name %in% markers)
 
 # ggplot(normal_tissue, aes(x = Gene.name, fill = Level)) +
 #   geom_bar(position = "fill") +
@@ -1200,7 +1208,7 @@ common_hub_genes_rna <- normal_rna_types %>%
 
 # filter hub genes to HPA database
 normal_rna_tissue <- common_hub_genes_rna %>%
-  filter(Gene.name %in% hub_genes)
+  filter(Gene.name %in% markers)
 
 hub_genes_rnaGeneTbd <- ggplot(normal_rna_tissue, aes(x = reorder(Gene.name, TPM), y = TPM)) +
   geom_segment(aes(xend = Gene.name, y = 0, yend = TPM), color = "grey60") +
@@ -1229,82 +1237,87 @@ install.packages("pROC")
 library(pROC)
 library(ggplot2)
 library(dplyr)
+library(data.table)
+library(pheatmap)
 
 # Define hub genes
-genes <- c("IL1B", "CXCL8", "CXCL1", "LCN2", "CXCL5", "CXCL11", "MMP1")
+genes <- markers
 
-# All pairwise comparisons
-comparisons <- combn(unique(integrated_meta_data$condition), 2, simplify=FALSE)
+genes <- markers[markers %in% rownames(integrated_expr_data)]
 
+comparisons <- list(
+  "HC_vs_LSC" = c("HC", "LSC"),
+  "HC_vs_PC"  = c("HC", "PC"),
+  "HC_vs_CRC" = c("HC", "CRC")
+)
+
+# Compute AUC once for each gene and comparison
 roc_results <- list()
-auc_table <- data.frame(Gene=character(), Comparison=character(), 
-                        AUC=numeric(), CI_low=numeric(), CI_high=numeric())
-
-# Loop over comparisons
-for (comp in comparisons) {
-  group1 <- comp[1]
-  group2 <- comp[2]
-  comp_name <- paste(group1, "vs", group2, sep="_")
+for (comp_name in names(comparisons)) {
+  group1 <- comparisons[[comp_name]][1]
+  group2 <- comparisons[[comp_name]][2]
   
-  # Subset metadata
   keep_samples <- integrated_meta_data$condition %in% c(group1, group2)
   sub_meta <- integrated_meta_data[keep_samples, ]
   sub_expr <- integrated_expr_data[, keep_samples]
   
-  # Binary labels: group1 = 0, group2 = 1
-  labels <- factor(ifelse(sub_meta$condition == group1, 0, 1))
+  labels <- ifelse(sub_meta$condition == group1, 0, 1)
   
   for (gene in genes) {
-    if (!(gene %in% rownames(sub_expr))) {
-      message("Skipping ", gene, " (not found in expression data)")
-      next
-    }
-    
     gene_expr <- as.numeric(sub_expr[gene, ])
-    
-    if (length(gene_expr) != length(labels)) {
-      message("Skipping ", gene, " (length mismatch)")
-      next
-    }
-    
-    roc_obj <- roc(labels, gene_expr, ci=TRUE)
-    roc_results[[paste(gene, comp_name, sep="_")]] <- roc_obj
-    
-    auc_table <- rbind(auc_table, data.frame(
-      Gene = gene,
-      Comparison = comp_name,
-      AUC = as.numeric(auc(roc_obj)),
-      CI_low = roc_obj$ci[1],
-      CI_high = roc_obj$ci[3]
-    ))
+    roc_obj <- roc(labels, gene_expr, quiet=TRUE)
+    roc_results[[paste0(gene,"_",comp_name)]] <- roc_obj
   }
 }
 
-# Inspect results
-auc_table <- auc_table %>% arrange(desc(AUC))
-print(auc_table)
+auc_table <- data.frame(
+  Gene = character(),
+  Comparison = character(),
+  AUC = numeric()
+)
 
-# ---- ROC PLOTTING for one comparison ----
-plot_comparison <- "HC_vs_PC"  # change as needed
-
-roc_df <- data.frame()
-for (gene in genes) {
-  key <- paste(gene, plot_comparison, sep="_")
-  if (!is.null(roc_results[[key]])) {
-    roc_obj <- roc_results[[key]]
-    coords_df <- coords(roc_obj, "all", ret=c("specificity","sensitivity"))
-    df <- data.frame(
-      Specificity = coords_df$specificity,
-      Sensitivity = coords_df$sensitivity,
-      Gene = gene,
-      AUC = round(auc(roc_obj), 2)
-    )
-    roc_df <- rbind(roc_df, df)
-  }
+for (key in names(roc_results)) {
+  parts <- strsplit(key, "_")[[1]]
+  gene <- parts[1]
+  comparison <- paste(parts[-1], collapse="_")  # take everything except first part
+  auc_table <- rbind(auc_table, data.frame(
+    Gene = gene,
+    Comparison = comparison,
+    AUC = as.numeric(auc(roc_results[[key]]))
+  ))
 }
+# ---------- Heatmap ----------
+setDT(auc_table)
+auc_matrix <- dcast(auc_table, Gene ~ Comparison, value.var="AUC")
+auc_mat <- as.matrix(auc_matrix[, -1, with=FALSE])
+rownames(auc_mat) <- auc_matrix$Gene
+
+pheatmap(auc_mat,
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+         color = colorRampPalette(c("skyblue", "white", "red"))(100),
+         main = "AUC Heatmap of Hub Genes Across Comparisons",
+         display_numbers = TRUE,
+         number_format = "%.2f")
+
+# ---------- Single ROC plot (use the same AUC values) ----------
+plot_comparison <- "HC_vs_CRC"
+
+roc_df <- do.call(rbind, lapply(genes, function(gene) {
+  key <- paste0(gene, "_", plot_comparison)
+  roc_obj <- roc_results[[key]]
+  coords_df <- coords(roc_obj, "all", ret=c("specificity","sensitivity"))
+  
+  data.frame(
+    Specificity = coords_df$specificity,
+    Sensitivity = coords_df$sensitivity,
+    Gene = gene,
+    AUC = as.numeric(auc(roc_obj))# 3 decimals
+  )
+}))
 
 ggplot(roc_df, aes(x=1-Specificity, y=Sensitivity, color=Gene)) +
-  geom_line(size=1) +
+  geom_line(linewidth=1) +
   geom_abline(linetype="dashed", color="gray") +
   theme_minimal(base_size=14) +
   labs(
@@ -1312,102 +1325,11 @@ ggplot(roc_df, aes(x=1-Specificity, y=Sensitivity, color=Gene)) +
     x = "False Positive Rate (1 - Specificity)",
     y = "True Positive Rate (Sensitivity)"
   ) +
-  scale_color_brewer(palette="Set1",
-                     labels = paste0(unique(roc_df$Gene),
-                                     " (AUC=", unique(roc_df$AUC), ")"))
-
-
-# Pairwise comparisons ROC 
-## binary between-group performance ( HC vs disease groups )
-
-library(pROC)
-library(data.table)  # for dcast
-
-genes <- c("IL1B", "CXCL8", "CXCL1", "LCN2", "CXCL5", "CXCL11", "MMP1")
-genes <- genes[genes %in% rownames(integrated_expr_data)]  # keep only valid ones
-
-comparisons <- list(
-  "HC_vs_CRC" = c("HC", "LSC"),
-  "HC_vs_LSC" = c("HC", "PC"),
-  "HC_vs_PC"  = c("HC", "CRC")
-)
-
-roc_results <- list()
-auc_table <- data.frame(Gene=character(), Comparison=character(),
-                        AUC=numeric(), CI_low=numeric(), CI_high=numeric())
-
-for (comp_name in names(comparisons)) {
-  groups <- comparisons[[comp_name]]
-  subset_idx <- integrated_meta_data$condition %in% groups
-  labels <- factor(integrated_meta_data$condition[subset_idx])
-  
-  for (gene in genes) {
-    gene_expr <- as.numeric(integrated_expr_data[gene, subset_idx])
-    
-    roc_obj <- roc(labels, gene_expr, ci=TRUE)
-    
-    auc_table <- rbind(auc_table, data.frame(
-      Gene = gene,
-      Comparison = comp_name,
-      AUC = as.numeric(auc(roc_obj)),
-      CI_low = roc_obj$ci[1],
-      CI_high = roc_obj$ci[3]
-    ))
-    
-    roc_results[[paste0(gene, "_", comp_name)]] <- roc_obj
-  }
-}
-
-
-# Convert auc_table into a data.table before casting
-setDT(auc_table)
-
-auc_matrix <- dcast(auc_table, Gene ~ Comparison, value.var="AUC")
-
-print(auc_matrix)
-
-# Plot heatmap
-library(pheatmap)
-
-# Convert to matrix (removing gene column)
-auc_mat <- as.matrix(as.data.frame(auc_matrix[ , -1]))
-rownames(auc_mat) <- auc_matrix$Gene
-
-# Heatmap
-pheatmap(auc_mat,
-         cluster_rows = TRUE,
-         cluster_cols = TRUE,
-         color = colorRampPalette(c("blue", "white", "red"))(100),
-         main = "AUC Heatmap of Hub Genes Across Comparisons",
-         display_numbers = TRUE,  # shows AUC values inside cells
-         number_format = "%.2f")
-
-# Gene Panel ROC curve AUC value
-library(pROC)
-
-# Candidate panel: IL1B, MS4A12, CXCL11, CXCL5
-panel_genes <- c("IL1B", "CXCL8", "CXCL1", "LCN2", "CXCL5", "CXCL11", "MMP1")
-
-# Extract expression matrix for panel genes (samples x genes)
-expr_panel <- as.data.frame(t(integrated_expr_data[panel_genes, ]))
-
-# Add labels
-expr_panel$condition <- factor(ifelse(integrated_meta_data$condition == "LSC", 1, 0))  
-# 1 = CRC, 0 = non-CRC (can also do pairwise comparisons separately)
-
-# Logistic regression model
-panel_model <- glm(condition ~ ., data=expr_panel, family=binomial)
-
-# Predict probabilities
-probabilities <- predict(panel_model, type="response")
-
-# ROC curve for combined panel
-roc_panel <- roc(expr_panel$condition, probabilities, ci=TRUE)
-
-# Plot
-plot(roc_panel, col="darkblue", lwd=2, main="ROC for Multi-Gene Panel")
-legend("bottomright", legend=paste0("Panel AUC = ", round(auc(roc_panel), 2)), 
-       col="darkblue", lwd=2)
+  scale_color_viridis_d(
+    option = "turbo",
+    labels = paste0(unique(roc_df$Gene),
+                    " (AUC=", sprintf("%.2f", unique(roc_df$AUC)), ")")  # 2 decimals
+  )
 
 
 
