@@ -450,8 +450,8 @@ batch_corrected_exp_pca_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = Gro
 
 # Save the plot as PDF
 ggsave(
-  filename = "results/Pre_processing/Batch_corrected/batch_corrected_exp_boxplot.pdf",
-  plot =  batch_corrected_exp_boxplot,
+  filename = "results/Pre_processing/Raw/raw_exp_boxplot.pdf",
+  plot =  raw_exp_boxplot,
   width = 10,   # adjust width in inches
   height = 6    # adjust height in inches
 )
