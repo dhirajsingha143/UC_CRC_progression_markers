@@ -54,7 +54,7 @@ p <- ggplot(plot_df, aes(x = Condition, y = Average_Incidence, fill = Source)) +
   scale_fill_brewer(type = "qual", palette = "Set2") +
   labs(
     title = "Global versus Indian Incidence Burden of IBD and Colorectal Cancer",
-    subtitle = "Mean and age-standardized incidence rates (per 100,000 person-years, 1990–2022)",
+    subtitle = "Mean and age-standardized incidence rates (per 100,000 person-years)",
        x = NULL,
        y = "Incidence (per 100,000 / year)",
        fill = "") +
