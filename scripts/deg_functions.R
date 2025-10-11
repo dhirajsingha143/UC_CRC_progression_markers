@@ -1,3 +1,12 @@
+
+################################################################################
+# Script: deg_functions.R
+# Purpose: Perform differential expression analysis between contrast samples
+# Author: Dhiraj Singha
+# Licence: MIT License @ 2025 Dhiraj Singha 
+# Repository:
+################################################################################
+
 # Required libraries
 library(limma)
 library(tibble)
@@ -92,4 +101,8 @@ library(ggrepel)
   }
 
   return(deg_results)
-}
+  }
+  
+################################################################################
+# End of deg_functions.R
+################################################################################

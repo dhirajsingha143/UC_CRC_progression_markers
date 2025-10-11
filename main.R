@@ -1,3 +1,26 @@
+
+################################################################################
+# Project: Integrated Transcriptomic Profiling of UC-CRC Progression
+# Author: Dhiraj Singha
+# License: MIT License @ 2025 Dhiraj Singha
+# Repository: 
+# Description: Main pipeline script to reproduce the entire analysis workflow
+################################################################################
+
+### SETUP-----------------------------------------------------------------------
+
+# Clean workspace
+rm(list = ls())
+
+# Set working directory
+root_dir <- getwd()
+
+### Source scripts--------------------------------------------------------------
+source("scripts/deg_functions.R")  # To perform Differential gene analysis
+source("scripts/enrichment.R")     # To perform Enrichment analysis
+source("scripts/PPI_functions.R")  # To perform PPI network analysis
+
+# Load BiocManager to install packages
 if(!requireNamespace("BiocManager", quitely = TRUE)){
   install.packages("BiocManager")
   library(BiocManager)
@@ -22,6 +45,7 @@ BiocManager::install("hpar")
 BiocManager::install("pheatmap")
 BiocManager::install("ggpubr")
 install.packages("ggalluvial")
+install.packages("pROC")
 
 # load packages
 library(GEOquery)
@@ -37,7 +61,7 @@ library(ggrepel)
 library(clusterProfiler)
 library(org.Hs.eg.db)
 library(enrichplot)
-library(ggupset)       # check for installation
+library(ggupset)
 library(stringr)
 library(ReactomePA)
 library(ComplexHeatmap)
@@ -46,12 +70,15 @@ library(ggVennDiagram)
 library(hpar)
 library(pheatmap)
 library(ggalluvial)
+library(pROC)
 
+
+### RUN Analysis pipeline-------------------------------------------------------
 
 # GEO data set load local downloaded files
 
-gset1 <- getGEO(filename = "GEO_Datasets/GSE47908_series_matrix.txt.gz", getGPL = FALSE)  # RMA UC  - data set
-gset2 <- getGEO(filename = "GEO_Datasets/GSE110224_series_matrix.txt.gz", getGPL = FALSE) # RMA CRC - data set
+gset1 <- getGEO(filename = "Datasets/GSE47908_series_matrix.txt.gz", getGPL = FALSE)  # RMA UC  - data set
+gset2 <- getGEO(filename = "Datasets/GSE110224_series_matrix.txt.gz", getGPL = FALSE) # RMA CRC - data set
 
 # meta data
 
@@ -457,9 +484,7 @@ ggsave(
 )
 
 #-------------------------------------------------------------------------------
-#---Differential expression identification----
-# Load the DEG functions
-source("scripts/deg_functions.R")
+#---Differential expression identification--------------------------------------
 
 # Contrast selection for differential expression analysis
 
@@ -522,7 +547,7 @@ ggVennDiagram(venn_list_down, label_alpha = 0, label = "count") +
   ggtitle("DEG Genes Down-regulated") +
   theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
 
---------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
 # Fetch annotations via BiomaRt Function ---
 
 # Connect to Ensembl
@@ -572,7 +597,8 @@ write.csv(annot_down_PC, "results/Enrichment/Input/DOWN/annot_down_PC.csv", row.
 write.csv(annot_up_CRC, "results/Enrichment/Input/UP/annot_up_CRC.csv", row.names = FALSE)
 write.csv(annot_down_CRC, "results/Enrichment/Input/DOWN/annot_down_CRC.csv", row.names = FALSE)
 
-source("scripts/enrichment.R")
+#-------------------------------------------------------------------------------
+# Enrichment Analysis
 #-------------------------------------------------------------------------------
 # UP genes LSC
 fc_values <- annot_up_LSC$logFC
@@ -653,7 +679,6 @@ res <- run_enrichment(
 )
 
 #--------------------------------------------------------------------------------
-
 #---Heat Map Generation for DEG Expressions----
 
 top_genes <- unique(c(
@@ -684,7 +709,7 @@ col_ha <- HeatmapAnnotation(
       "PC"  = "purple",
       "CRC" = "yellow"
     ),
-    Batch = c("1" = "salmon", "2" = "gold", "3" = "lightblue")
+    Batch = c("1" = "salmon", "2" = "gold")
   ),
   annotation_height = unit(6, "mm")
 )
@@ -708,8 +733,9 @@ Heatmap(
   column_names_gp = gpar(fontsize = 5)
 )
 
-#--------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # PPI Network Analysis
+#-------------------------------------------------------------------------------
 # Load the functions for PPI network analysis
 source("scripts/PPI_functions.R")
 
@@ -921,6 +947,7 @@ modules_CRC_vs_HC_down <- detect_ppi_modules(
   return_plot = TRUE
 )
 
+#-------------------------------------------------------------------------------
 # Define hub gene list
 
 hub_genes_all <- list(
@@ -929,20 +956,8 @@ hub_genes_all <- list(
   CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol,hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
 )
 
-hub_genes_up <- list(
-  LSC <- unique(c(hubs_LSC_vs_HC_up$hub_df$Gene_Symbol)),
-  PC <- unique(c(hubs_PC_vs_HC_up$hub_df$Gene_Symbol)),
-  CRC <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol))
-)
 
-# hub_genes_down <- list(
-#   LSC <- unique(c(hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
-#   PC <- unique(c(hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
-#   CRC <- unique(c(hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
-# )
-
-
-#---Heat Map Generation for DEG Expressions----
+#---Heat Map Generation for DEG Expressions-------------------------------------
 
 top_genes <- unique(c(
   LSC,
@@ -969,7 +984,7 @@ col_ha <- HeatmapAnnotation(
       "PC"  = "purple",
       "CRC" = "yellow"
     ),
-    Batch = c("1" = "salmon", "2" = "gold", "3" = "lightblue")
+    Batch = c("1" = "salmon", "2" = "gold")
   ),
   annotation_height = unit(6, "mm")
 )
@@ -993,22 +1008,51 @@ Heatmap(
   column_names_gp = gpar(fontsize = 5)
 )
 
-
-# Prepare your list
-venn_list <- list(
-  LSC = LSC,
-  PC = PC,
-  CRC = CRC
+#-------------------------------------------------------------------------------
+# Venn diagram of hub genes across stages
+hub_genes_up <- list(
+  LSC_up <- unique(c(hubs_LSC_vs_HC_up$hub_df$Gene_Symbol)),
+  PC_up <- unique(c(hubs_PC_vs_HC_up$hub_df$Gene_Symbol)),
+  CRC_up <- unique(c(hubs_CRC_vs_HC_up$hub_df$Gene_Symbol))
 )
 
-# Plot
-ggVennDiagram(venn_list, label_alpha = 0, label = "count") +
+hub_genes_down <- list(
+  LSC_down <- unique(c(hubs_LSC_vs_HC_down$hub_df$Gene_Symbol)),
+  PC_down <- unique(c(hubs_PC_vs_HC_down$hub_df$Gene_Symbol)),
+  CRC_down <- unique(c(hubs_CRC_vs_HC_down$hub_df$Gene_Symbol))
+)
+
+
+# Prepare your list UP
+venn_list_up <- list(
+  LSC = LSC_up,
+  PC = PC_up,
+  CRC = CRC_up
+)
+
+# Plot UP
+ggVennDiagram(venn_list_up, label_alpha = 0, label = "count") +
   scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
   theme_void() +
   ggtitle("Hub Genes Across UC to CRC progression") +
   theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
 
-# common genes between Stages
+# Prepare your list DOWN
+venn_list_down <- list(
+  LSC = LSC_down,
+  PC = PC_down,
+  CRC = CRC_down
+)
+
+# Plot DOWN
+ggVennDiagram(venn_list_down, label_alpha = 0, label = "count") +
+  scale_fill_gradient(low = "#FDE725FF", high = "#440154FF") +
+  theme_void() +
+  ggtitle("Hub Genes Across UC to CRC progression") +
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))
+
+#-------------------------------------------------------------------------------
+# Common genes between Stages
 
 LSC_PC <- intersect(LSC, PC)
 PC_CRC <- intersect(PC, CRC)
@@ -1016,11 +1060,9 @@ PC_CRC <- intersect(PC, CRC)
 UC <- intersect(LSC_PC, PC_CRC)
 
 UC_CRC <- intersect(UC, CRC) # UC to CRC common significantly hub markers
-
 LC_CRC <- intersect(LSC, CRC) # early UC to CRC common significantly hub markers
-# LC_CRC  7 common genes and direct 3 genes (CXCL9,NR1H4,UGT1A1)
 PC_CRC <- intersect(PC, CRC) # late UC to CRC common significantly hub markers
-# MMP3 and MS4A12 uniques and common 7 genes
+
 
 candidate_genes <- list(
   Early_UC_to_CRC = LC_CRC,
@@ -1030,34 +1072,9 @@ candidate_genes <- list(
 
 markers <- unique(c(LC_CRC, PC_CRC, UC_CRC))
 
-# annotations of common genes to entrenz id
-
-get_entrez <- function(gene_list) {
-  getBM(
-    attributes = c("external_gene_name", "entrezgene_id"),
-    filters = "external_gene_name",
-    values = gene_list,
-    mart = ensembl
-  ) %>% distinct()
-}
-
-UC_CRC_annot <- get_entrez(UC_CRC)
-
-source("scripts/enrichment.R")
 #-------------------------------------------------------------------------------
-# UP HUB genes Common UC to CRC Enrichment
-
-res <- run_enrichment(
-  gene_list  = UC_CRC_annot$entrezgene_id,  # Entrez IDs of DEGs table
-  fc_values  = NULL,                   # gene vector of logFC values
-  prefix     = "UC_to_CRC_HUB_up",              # File naming prefix
-  outdir     = "results/UC_to_CRC_HUB/HUB_Enrichment",      # dir name
-  showCategory = 15,
-  save_tables = TRUE
-)
-
-#---Box Plot of genes Expression Across Disease Groups----
-
+# Box Plot of genes Expression Across Disease Groups
+#-------------------------------------------------------------------------------
 # Load
 
 # Define pairwise comparisons (optional)
@@ -1066,10 +1083,10 @@ my_comparisons <- list(
   c("HC", "LSC"), c("HC", "PC"), c("HC", "CRC")
 )
 
-gene_id <- "MS4A12"
+gene_id <- "MS4A12" # individual markers to plot
 title <- NULL
 
-
+# Extract expression values for the specified gene
 expr_vec <- as.numeric(batch_corrected_expr[gene_id, ])
 if (length(expr_vec) != nrow(integrated_meta_data)) stop("Expression and metadata mismatch")
 
@@ -1096,10 +1113,9 @@ ggsave(
   height = 6    # adjust height in inches
 )
 
-
------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Validation with HPA db
----------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Install required packages if not already installed
 
 # Example hub gene list
@@ -1127,19 +1143,7 @@ hub_summary <- hub_in_crc %>%
 
 hub_summary
 
---------------------------------------------------------------------------------
-# Visualization
-# ggplot(hub_in_crc, aes(x = Gene.name, y = Count.patients, fill = Level)) +
-#   geom_bar(stat = "identity", position = "fill") +
-#   scale_fill_manual(values = c("Not detected"="grey80",
-#                                "Low"="skyblue",
-#                                "Medium"="orange",
-#                                "High"="red")) +
-#   theme_minimal(base_size = 14) +
-#   labs(title = "Hub Gene Expression in Colorectal Cancer (HPA)",
-#        y = "Proportion of Patients", x = "Genes") +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
+# Alluvial plot
 hub_genes_hpa_cancerdb <- ggplot(hub_in_crc,
        aes(axis1 = Gene.name, axis2 = Level, y = Count.patients)) +
   geom_alluvium(aes(fill = Level), width = 1/12) +
@@ -1154,8 +1158,6 @@ hub_genes_hpa_cancerdb <- ggplot(hub_in_crc,
        y = "Patient Counts", x = "")
 
 
---------------------------------------------------------------------------------
-
 # Expression in normal tissues
 
 # Load cancer data of HPA version 16.1
@@ -1168,17 +1170,6 @@ filter(str_detect(Tissue, "colon|rectum|colorectal"))
 # filter hub genes to HPA database
 normal_tissue <- common_hub_genes %>%
 filter(Gene.name %in% markers)
-
-# ggplot(normal_tissue, aes(x = Gene.name, fill = Level)) +
-#   geom_bar(position = "fill") +
-#   scale_fill_manual(values = c("Not detected"="grey80",
-#                                "Low"="skyblue",
-#                                "Medium"="orange",
-#                                "High"="red")) +
-#   theme_minimal(base_size = 14) +
-#   labs(title = "Hub Gene Expression in Normal Colon/Rectum (HPA v16.1)",
-#        y = "Proportion of Cell Types", x = "Genes") +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 plot_data <- normal_tissue %>%
   count(Gene.name, Level, name = "Count.patients")
@@ -1200,6 +1191,7 @@ hub_genes_HPA_NormalTdb <- ggplot(plot_data,
 
 # rnaGtexTissue Normal RNA-seq, healthy colon/rectum samples
 
+# Load data
 normal_rna_types <- rnaGtexTissue()
 
 #Filter cancer
@@ -1228,18 +1220,9 @@ ggsave(
   height =  6   # adjust height in inches
 )
 
------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # ROC curve analysis
-
-#install
-install.packages("pROC")
-
-library(pROC)
-library(ggplot2)
-library(dplyr)
-library(data.table)
-library(pheatmap)
-
+#-------------------------------------------------------------------------------
 # Define hub genes
 genes <- markers
 
@@ -1286,7 +1269,8 @@ for (key in names(roc_results)) {
     AUC = as.numeric(auc(roc_results[[key]]))
   ))
 }
-# ---------- Heatmap ----------
+# ---------- Heatmap -----------------------------------------------------------
+
 setDT(auc_table)
 auc_matrix <- dcast(auc_table, Gene ~ Comparison, value.var="AUC")
 auc_mat <- as.matrix(auc_matrix[, -1, with=FALSE])
@@ -1300,8 +1284,9 @@ pheatmap(auc_mat,
          display_numbers = TRUE,
          number_format = "%.2f")
 
-# ---------- Single ROC plot (use the same AUC values) ----------
-plot_comparison <- "HC_vs_CRC"
+# ---------- Single ROC plot (use the same AUC values) -------------------------
+
+plot_comparison <- "HC_vs_CRC" # Change as needed
 
 roc_df <- do.call(rbind, lapply(genes, function(gene) {
   key <- paste0(gene, "_", plot_comparison)
@@ -1331,5 +1316,12 @@ ggplot(roc_df, aes(x=1-Specificity, y=Sensitivity, color=Gene)) +
                     " (AUC=", sprintf("%.2f", unique(roc_df$AUC)), ")")  # 2 decimals
   )
 
+### Save Environment information--------------------------------------------------
 
+sessionInfo()
+writeLines(capture.output(sessionInfo()), "results/sessionInfo.txt")
+cat("Session info saved to results/sessionInfo.txt\n")
 
+################################################################################
+# End of main.R
+################################################################################

@@ -1,3 +1,12 @@
+
+################################################################################
+# Script: PPI_functions.R
+# Purpose: Construct PPI network, identify modules and hubs
+# Author: Dhiraj Singha
+# Licence: MIT License @ 2025 Dhiraj Singha 
+# Repository:
+################################################################################
+
 # Install if not already
 if (!requireNamespace("STRINGdb", quietly = TRUE)) {
   BiocManager::install("STRINGdb")
@@ -435,7 +444,6 @@ run_ppi_analysis <- function(deg_out_annotated,
   return(all_results)
 }
 
-
-
-
-
+################################################################################
+# End of PPI_functions.R
+################################################################################

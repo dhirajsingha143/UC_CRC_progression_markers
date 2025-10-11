@@ -1,3 +1,13 @@
+
+################################################################################
+# Script: enrichment.R
+# Purpose: Conduct Gene Ontology, KEGG, and Reactome enrichment analysis
+#          using clusterProfiler and ReactomePA packages.
+# Author: Dhiraj Singha
+# Licence: MIT License @ 2025 Dhiraj Singha 
+# Repository:
+################################################################################
+
 run_enrichment <- function(
     gene_list,
     fc_values = NULL,
@@ -79,3 +89,7 @@ run_enrichment <- function(
   return(results)
 }
 
+
+################################################################################
+# End of enrichment.R
+################################################################################
