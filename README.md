@@ -62,7 +62,7 @@ This analysis was conducted using:
     <li>R Packages: GEOquery, dplyr, tibble, limma, clusterProfiler, org.Hs.eg.db, STRINGdb, igraph, pROC, ggplot2, ..etc</li>
     <li>Data Sources: GEO, ENSEMBL, STRING, HPA</li>
   </ul>
-
+</details>
 ---
 
 ## Getting Started
