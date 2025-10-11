@@ -188,22 +188,21 @@ UC_CRC_progression_markers/
 
 Contributions are welcome! Please fork the repository and create a pull request with your changes.
 
-### Contact
+### Contact <a name="contact"></a>
 
-<div align="left">
-- Dhiraj Singha
+
+**Dhiraj Singha**
 - Department of Biotechnology, Amity University Uttar Pradesh, India
 - Email: dhiraj.singha@s.amity.edu
 - Github: [@dhirajsingha143](https://github.com/dhirajsingha143)
 - LinkedIn: [Dhiraj Singha](https://www.linkedin.com/in/dhiraj-singha-b6871717a/)
-</div>
-<br>
-<div align="left">
-- Prof Kumud Bala
+
+
+**Prof Kumud Bala**
 - Deputy Dean Student Welfare, Department of Biotechnology, Amity University Uttar Pradesh, India
 - Email: kbala@amity.edu
 - LinkedIn: [Prof Kumud Bala](https://www.linkedin.com/in/kumudbala/)
-</div>
+
 
 ### Acknowledgements
 
