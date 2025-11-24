@@ -1,6 +1,6 @@
 # 🧬 Bioinformatics Exploration: UC–CRC Progression Markers
 
-This repository is a part of the manuscript submitted to *Functional & Integrative Genomics* titled:  
+This repository is a part of the manuscript submitted to *Biochemical Genetics* titled:  
 **“From Inflammation to Malignancy: An Integrated Bioinformatics Exploration of Ulcerative Colitis – Associated Colorectal Cancer”**
 
 It contains the complete workflow, analysis scripts, and processed data supporting the findings of this study.
